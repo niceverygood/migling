@@ -1,0 +1,17 @@
+name: Deploy API
+on:
+  push:
+    paths: ["backend/**","infra/**"]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: SSH Deploy
+      uses: appleboy/ssh-action@v1
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ec2-user
+        key: ${{ secrets.EC2_KEY }}
+        script: |
+          cd mingling && ./infra/deploy.sh 
