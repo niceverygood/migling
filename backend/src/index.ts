@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import './openai'; // Initialize OpenAI client
 import characterRoutes from './routes/character';
+import chatRoutes from './routes/chat';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -16,6 +17,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/characters', characterRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
