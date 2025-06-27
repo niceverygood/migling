@@ -75,7 +75,7 @@ export const getConnectionStatus = async () => {
     const connection = await pool.getConnection();
     
     // 연결 정보 확인
-    const [statusRows] = await connection.execute('SELECT CONNECTION_ID() as connection_id, NOW() as current_time');
+    const [statusRows] = await connection.execute('SELECT CONNECTION_ID() as connection_id, NOW() as server_time');
     const [variableRows] = await connection.execute("SHOW STATUS LIKE 'Threads_connected'");
     
     connection.release();
@@ -83,7 +83,7 @@ export const getConnectionStatus = async () => {
     return {
       status: 'connected',
       connectionId: (statusRows as any)[0]?.connection_id,
-      currentTime: (statusRows as any)[0]?.current_time,
+      currentTime: (statusRows as any)[0]?.server_time,
       threadsConnected: (variableRows as any)[0]?.Value,
       poolConfig: {
         connectionLimit: dbConfig.connectionLimit,
