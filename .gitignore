@@ -3,4 +3,4 @@ node_modules/
 frontend/.env*
 database/dbdata/
 frontend/dist/
-backend/build/ 
+backend/build/ mingling-key.pem
