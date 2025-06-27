@@ -1,9 +1,27 @@
+import express from 'express';
+import cors from 'cors';
 import './openai'; // Initialize OpenAI client
+import characterRoutes from './routes/character';
 
-console.log('🚀 Backend server starting...');
-
+const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Basic HTTP server placeholder - you'll need to add Express.js or similar
-console.log(`Server would run on port ${PORT}`);
-console.log('⚠️  Note: Add Express.js server implementation here'); 
+// Middleware
+app.use(cors({
+  origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+  credentials: true
+}));
+app.use(express.json());
+
+// Routes
+app.use('/api/characters', characterRoutes);
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 Backend server running on port ${PORT}`);
+  console.log(`🌐 CORS enabled for: ${process.env.CLIENT_ORIGIN || 'http://localhost:5173'}`);
+}); 
