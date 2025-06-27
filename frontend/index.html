@@ -1,13 +1,83 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
+    <!-- App Information -->
+    <title>Mingling - 감성 AI 캐릭터 챗봇</title>
+    <meta name="description" content="AI 친구들과 함께하는 특별한 대화, Mingling에서 감성적인 AI 캐릭터와 만나보세요." />
+    <meta name="keywords" content="AI, 챗봇, 캐릭터, 대화, 친구, 감성, Mingling" />
+    <meta name="author" content="Mingling Team" />
+
+    <!-- Mobile Web App -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Mingling" />
+    
+    <!-- Theme Colors -->
+    <meta name="theme-color" content="#9333ea" />
+    <meta name="msapplication-TileColor" content="#9333ea" />
+    <meta name="msapplication-navbutton-color" content="#9333ea" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
+    <link rel="apple-touch-icon" href="/vite.svg" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Security -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Mingling - 감성 AI 캐릭터 챗봇" />
+    <meta property="og:description" content="AI 친구들과 함께하는 특별한 대화" />
+    <meta property="og:url" content="https://mingling.vercel.app" />
+    <meta property="og:site_name" content="Mingling" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Mingling - 감성 AI 캐릭터 챗봇" />
+    <meta name="twitter:description" content="AI 친구들과 함께하는 특별한 대화" />
+    
+    <!-- Performance hints -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="//fonts.gstatic.com" />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Service Worker Registration (for future PWA features) -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
+
+    <!-- Prevent iOS bounce scroll -->
+    <script>
+      document.addEventListener('touchstart', {}, true);
+      document.addEventListener('touchmove', function(e) {
+        if (e.target.closest('input, textarea, select')) return;
+        e.preventDefault();
+      }, { passive: false });
+    </script>
   </body>
 </html>

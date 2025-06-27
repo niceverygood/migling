@@ -1,17 +1,30 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, type User } from 'firebase/auth';
 
-// TODO: Replace with your actual Firebase config
 const firebaseConfig = {
-  apiKey: "your-api-key",
-  authDomain: "your-project.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "your-app-id"
+  apiKey: "AIzaSyCpGXULewwRPmUiljiFCZcZ25QPMYEVUn4",
+  authDomain: "mingling-3f2d5.firebaseapp.com",
+  projectId: "mingling-3f2d5",
+  storageBucket: "mingling-3f2d5.firebasestorage.app",
+  messagingSenderId: "127809706418",
+  appId: "1:127809706418:web:97eba244663b84a786ecab",
+  measurementId: "G-KYR28WQL23"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
+// Initialize Firebase Auth
 export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider(); 
+
+// Google Auth Provider
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
+
+// Auth functions
+export const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
+export const signOutUser = () => signOut(auth);
+
+export type { User }; 

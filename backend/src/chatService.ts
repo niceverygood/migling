@@ -15,9 +15,9 @@ export async function chatWithCharacter(characterId: number, userMsg: string) {
   });
   
   const messages = [
-    { role: 'system', content: `You are ${character.name}. ${character.description}` },
-    ...history.map(m => ({ role: m.role, content: m.content })),
-    { role: 'user', content: userMsg }
+    { role: 'system' as const, content: `You are ${character.name}. ${character.description}` },
+    ...history.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+    { role: 'user' as const, content: userMsg }
   ];
   
   const resp = await openai.chat.completions.create({ 

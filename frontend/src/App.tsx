@@ -1,43 +1,82 @@
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
-import Home from './components/Home'
-import LoginButton from './components/LoginButton'
-import CharacterList from './components/CharacterList'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Layout from './components/Layout/Layout';
+import Login from './components/Auth/Login';
+import Friends from './components/Tabs/Friends';
+import Chat from './components/Tabs/Chat';
+import ForYou from './components/Tabs/ForYou';
+import My from './components/Tabs/My';
 
-function App() {
-  return (
-    <BrowserRouter>
-      <div className="min-h-screen bg-gray-50">
-        <nav className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-16">
-              <div className="flex space-x-8 items-center">
-                <Link to="/" className="text-xl font-bold text-gray-900">
-                  Mingling
-                </Link>
-                <Link to="/" className="text-gray-500 hover:text-gray-900">
-                  Home
-                </Link>
-                <Link to="/characters" className="text-gray-500 hover:text-gray-900">
-                  Characters
-                </Link>
-                <Link to="/login" className="text-gray-500 hover:text-gray-900">
-                  Login
-                </Link>
-              </div>
-            </div>
-          </div>
-        </nav>
+// Protected Route Component
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, loading } = useAuth();
 
-        <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<LoginButton />} />
-            <Route path="/characters" element={<CharacterList />} />
-          </Routes>
-        </main>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">로딩 중...</p>
+        </div>
       </div>
-    </BrowserRouter>
-  )
-}
+    );
+  }
 
-export default App
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+// App Routes Component
+const AppRoutes: React.FC = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    );
+  }
+
+  return (
+    <Layout>
+      <Routes>
+        <Route path="/friends" element={<Friends />} />
+        <Route path="/chat" element={<Chat />} />
+        <Route path="/foryou" element={<ForYou />} />
+        <Route path="/my" element={<My />} />
+        <Route path="/" element={<Navigate to="/friends" replace />} />
+        <Route path="*" element={<Navigate to="/friends" replace />} />
+      </Routes>
+    </Layout>
+  );
+};
+
+// Main App Component
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <Router>
+        <AppRoutes />
+      </Router>
+    </AuthProvider>
+  );
+};
+
+export default App;

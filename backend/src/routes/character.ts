@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { chatWithCharacter } from '../chatService';
 
@@ -16,15 +16,22 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/characters
-router.post('/', async (req, res) => {
+router.post('/', async (req: Request, res: Response) => {
   try {
-    const { name, description, mbti, nsfw } = req.body;
+    const { name, description, mbti, nsfw, jsonPrompt } = req.body;
     if (!name) return res.status(400).json({ error: 'name required' });
     const char = await prisma.character.create({ 
-      data: { name, description, mbti, nsfw }
+      data: { 
+        name, 
+        description: description || '', 
+        mbti: mbti || null,
+        nsfw: nsfw || false,
+        jsonPrompt: jsonPrompt || `You are ${name}. ${description || 'A helpful character.'}`
+      }
     });
     res.json(char);
   } catch (error) {
+    console.error('Create character error:', error);
     res.status(500).json({ error: 'Failed to create character' });
   }
 });

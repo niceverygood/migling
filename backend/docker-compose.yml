@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+  # Mingling Backend Service
+  mingling-backend:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: mingling-backend
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3001}:3001"
+    environment:
+      # Database Configuration
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      # Server Configuration
+      - PORT=${PORT:-3001}
+      - NODE_ENV=${NODE_ENV:-production}
+      # CORS Configuration
+      - CLIENT_ORIGIN=${CLIENT_ORIGIN}
+      # OpenAI Configuration
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    env_file:
+      - .env
+    volumes:
+      # Mount logs directory (optional)
+      - ./logs:/app/logs:rw
+    networks:
+      - mingling-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      - mingling-db-tunnel  # DB 터널링이 필요한 경우
+    labels:
+      - "com.docker.compose.project=mingling"
+      - "com.docker.compose.service=backend"
+
+  # Database Tunnel Service (AWS RDS 연결용 - 옵셔널)
+  mingling-db-tunnel:
+    image: alpine/socat:latest
+    container_name: mingling-db-tunnel
+    restart: unless-stopped
+    command: TCP-LISTEN:3306,fork,reuseaddr TCP:${DB_HOST}:${DB_PORT}
+    ports:
+      - "3306:3306"
+    networks:
+      - mingling-network
+    labels:
+      - "com.docker.compose.project=mingling"
+      - "com.docker.compose.service=db-tunnel"
+
+  # Nginx Reverse Proxy (프로덕션 환경용)
+  mingling-nginx:
+    image: nginx:alpine
+    container_name: mingling-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro  # SSL 인증서 (있는 경우)
+    depends_on:
+      - mingling-backend
+    networks:
+      - mingling-network
+    labels:
+      - "com.docker.compose.project=mingling"
+      - "com.docker.compose.service=nginx"
+
+networks:
+  mingling-network:
+    driver: bridge
+
+volumes:
+  mingling-logs:
+    driver: local
+
+# Docker Compose 사용법:
+#
+# 개발 환경:
+# docker-compose up --build
+#
+# 프로덕션 환경:
+# docker-compose -f docker-compose.yml up -d --build
+#
+# 로그 확인:
+# docker-compose logs -f mingling-backend
+#
+# 서비스 재시작:
+# docker-compose restart mingling-backend
+#
+# 전체 종료:
+# docker-compose down
+#
+# EC2 배포 시 체크리스트:
+# 1. .env 파일이 올바르게 설정되어 있는지 확인
+# 2. EC2 Security Group에서 포트 3001, 80, 443 허용
+# 3. RDS Security Group에서 EC2 접근 허용 (포트 3306)
+# 4. Docker와 Docker Compose가 EC2에 설치되어 있는지 확인
+# 5. SSL 인증서가 필요한 경우 ./ssl 디렉토리에 배치
+# 6. Nginx 설정이 필요한 경우 nginx.conf 파일 생성 
