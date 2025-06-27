@@ -5,6 +5,7 @@
     "outDir": "./build",
     "rootDir": "./src",
     "strict": false,
+    "noImplicitReturns": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,

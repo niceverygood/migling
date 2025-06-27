@@ -1,5 +1,6 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
+import { chatWithCharacter } from '../chatService';
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -49,6 +50,24 @@ router.delete('/:id', async (req, res) => {
     res.json({ deleted: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete character' });
+  }
+});
+
+// POST /api/characters/:id/chat
+router.post('/:id/chat', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { message } = req.body;
+    
+    if (!message) {
+      return res.status(400).json({ error: 'message is required' });
+    }
+    
+    const reply = await chatWithCharacter(parseInt(id), message);
+    res.json({ reply });
+  } catch (error) {
+    console.error('Chat error:', error);
+    res.status(500).json({ error: 'Failed to chat with character' });
   }
 });
 
