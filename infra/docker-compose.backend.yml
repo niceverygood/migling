@@ -1,0 +1,15 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.backend
+    env_file: ../backend/.env
+    ports: ["3001:3001"]
+    depends_on: [ db ]
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: Mingle123!
+      MYSQL_DATABASE: mingling
+    volumes: ["dbdata:/var/lib/mysql"]
+volumes: { dbdata: } 
