@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+  origin: process.env.CLIENT_ORIGIN ? process.env.CLIENT_ORIGIN.split(',') : ['http://localhost:5173'],
   credentials: true
 }));
 app.use(express.json());
@@ -23,5 +23,5 @@ app.get('/api/health', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`🚀 Backend server running on port ${PORT}`);
-  console.log(`🌐 CORS enabled for: ${process.env.CLIENT_ORIGIN || 'http://localhost:5173'}`);
+  console.log(`🌐 CORS enabled for: ${process.env.CLIENT_ORIGIN ? process.env.CLIENT_ORIGIN.split(',').join(', ') : 'http://localhost:5173'}`);
 }); 
