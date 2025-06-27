@@ -29,6 +29,9 @@ model Character {
   name        String
   description String
   jsonPrompt  String
+  avatarUrl   String?   @db.VarChar(255)
+  mbti        String?   @db.VarChar(4)
+  nsfw        Boolean   @default(false)
   createdAt   DateTime  @default(now())
   messages    Message[]
 }
