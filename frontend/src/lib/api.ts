@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://52.63.124.130:3001';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3003';
 
 // Create axios instance
 export const api = axios.create({
@@ -62,7 +62,7 @@ api.interceptors.response.use(
 export const authAPI = {
   // Send Firebase user info to backend to get JWT token
   loginWithFirebase: async (firebaseUser: any) => {
-    const { data } = await api.post('/auth/firebase', {
+    const { data } = await api.post('/api/auth/firebase', {
       uid: firebaseUser.uid,
       email: firebaseUser.email,
       displayName: firebaseUser.displayName,
@@ -73,7 +73,7 @@ export const authAPI = {
 
   // Get current user info
   getCurrentUser: async () => {
-    const { data } = await api.get('/auth/me');
+    const { data } = await api.get('/api/auth/me');
     return data;
   },
 };
@@ -93,21 +93,91 @@ export const userAPI = {
 };
 
 export const characterAPI = {
-  // Get user's characters
-  getMyCharacters: async () => {
-    const { data } = await api.get('/characters/my');
+  // Get all characters with optional filters
+  getAllCharacters: async (filters?: {
+    category?: string;
+    gender?: string;
+    user_id?: number;
+    is_private?: boolean;
+  }) => {
+    const params = new URLSearchParams();
+    if (filters?.category) params.append('category', filters.category);
+    if (filters?.gender) params.append('gender', filters.gender);
+    if (filters?.user_id) params.append('user_id', filters.user_id.toString());
+    if (filters?.is_private !== undefined) params.append('is_private', filters.is_private.toString());
+    
+    const url = `/api/characters${params.toString() ? `?${params.toString()}` : ''}`;
+    const { data } = await api.get(url);
     return data;
   },
 
-  // Create new character
-  createCharacter: async (characterData: any) => {
-    const { data } = await api.post('/characters', characterData);
+  // Create new character with full form data
+  createCharacter: async (characterData: {
+    name: string;
+    description?: string;
+    personality?: string;
+    avatar_url?: string;
+    age?: number | null;
+    occupation?: string;
+    one_liner?: string;
+    category?: string;
+    gender?: 'male' | 'female' | 'unspecified';
+    background_info?: string;
+    habits?: string;
+    hashtags?: string[];
+    first_scene_setting?: string;
+    chat_ending?: string;
+    is_private?: boolean;
+    chat_room_code?: string;
+  }) => {
+    const { data } = await api.post('/api/characters', characterData);
     return data;
   },
 
   // Get character by ID
   getCharacter: async (id: string) => {
-    const { data } = await api.get(`/characters/${id}`);
+    const { data } = await api.get(`/api/characters/${id}`);
+    return data;
+  },
+
+  // Chat with character (with persona and affection)
+  chatWithCharacter: async (id: string, message: string, personaId?: number) => {
+    const { data } = await api.post(`/api/characters/${id}/chat`, { 
+      message, 
+      personaId 
+    });
+    return data;
+  },
+
+  // Get affection between persona and character
+  getAffection: async (characterId: string, personaId: number) => {
+    const { data } = await api.get(`/api/characters/${characterId}/affection/${personaId}`);
+    return data;
+  },
+
+  // Get chat history between persona and character
+  getChatHistory: async (characterId: string, personaId: number, limit = 50) => {
+    const { data } = await api.get(`/api/characters/${characterId}/history/${personaId}?limit=${limit}`);
+    return data;
+  },
+};
+
+export const personaAPI = {
+  // Get all personas for current user
+  getAllPersonas: async () => {
+    const { data } = await api.get('/api/personas');
+    return data;
+  },
+
+  // Get or create default persona
+  getDefaultPersona: async () => {
+    const { data } = await api.get('/api/personas/default');
+    return data;
+  },
+
+  // Create new persona
+  createPersona: async (personaData: any) => {
+    const { data } = await api.post('/api/personas', personaData);
     return data;
   },
 };

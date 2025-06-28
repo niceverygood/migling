@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { characterAPI, userAPI } from '../../lib/api';
 
 const My: React.FC = () => {
-  const { user, userProfile, logout } = useAuth();
-  const [myCharacters, setMyCharacters] = useState([]);
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const [myCharacters, setMyCharacters] = useState<any[]>([]);
   const [userStats, setUserStats] = useState({
     gems: 1250,
     level: 5,
@@ -19,7 +21,7 @@ const My: React.FC = () => {
 
   const loadMyCharacters = async () => {
     try {
-      const characters = await characterAPI.getMyCharacters();
+      const characters = await characterAPI.getAllCharacters({ user_id: 1 }); // 임시로 user_id 1 사용
       setMyCharacters(characters);
     } catch (error) {
       console.error('Failed to load characters:', error);
@@ -126,17 +128,64 @@ const My: React.FC = () => {
         </div>
       </div>
 
-      {/* My Characters */}
-      <div className="px-4">
+      {/* My Personas */}
+      <div className="px-4 mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">내 캐릭터</h2>
-          <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+          <h2 className="text-lg font-semibold text-gray-900">내 페르소나</h2>
+          <button 
+            onClick={() => navigate('/persona/create')}
+            className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
             + 추가
           </button>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          {myCharacters.map((character: any) => (
+          {/* Default Persona */}
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div className="text-center">
+              <div className="text-3xl mb-3">👤</div>
+              <h3 className="font-medium text-gray-900 mb-1">나</h3>
+              <p className="text-xs text-gray-600 mb-2">기본 페르소나</p>
+              <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs">
+                기본
+              </span>
+              <div className="flex space-x-2 mt-3">
+                <button className="flex-1 bg-blue-100 text-blue-700 py-2 px-3 rounded-lg text-xs font-medium hover:bg-blue-200 transition-colors">
+                  설정
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Add Persona Card */}
+          <div 
+            onClick={() => navigate('/persona/create')}
+            className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer border-dashed border-2"
+          >
+            <div className="text-center h-full flex flex-col justify-center">
+              <div className="text-3xl mb-3 text-gray-400">➕</div>
+              <h3 className="font-medium text-gray-600 mb-1">새 페르소나</h3>
+              <p className="text-xs text-gray-500">나의 새로운 모습</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* My Characters */}
+      <div className="px-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">내 캐릭터</h2>
+          <button 
+            onClick={() => navigate('/character/create')}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            + 추가
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          {myCharacters.map((character) => (
             <div
               key={character.id}
               className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
@@ -161,7 +210,10 @@ const My: React.FC = () => {
           ))}
 
           {/* Add Character Card */}
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer border-dashed border-2">
+          <div 
+            onClick={() => navigate('/character/create')}
+            className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer border-dashed border-2"
+          >
             <div className="text-center h-full flex flex-col justify-center">
               <div className="text-3xl mb-3 text-gray-400">➕</div>
               <h3 className="font-medium text-gray-600 mb-1">새 캐릭터</h3>

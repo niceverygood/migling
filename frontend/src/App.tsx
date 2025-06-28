@@ -7,6 +7,8 @@ import Friends from './components/Tabs/Friends';
 import Chat from './components/Tabs/Chat';
 import ForYou from './components/Tabs/ForYou';
 import My from './components/Tabs/My';
+import CharacterCreation from './components/CharacterCreation';
+import PersonaCreation from './components/PersonaCreation';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -55,16 +57,25 @@ const AppRoutes: React.FC = () => {
   }
 
   return (
-    <Layout>
-      <Routes>
-        <Route path="/friends" element={<Friends />} />
-        <Route path="/chat" element={<Chat />} />
-        <Route path="/foryou" element={<ForYou />} />
-        <Route path="/my" element={<My />} />
-        <Route path="/" element={<Navigate to="/friends" replace />} />
-        <Route path="*" element={<Navigate to="/friends" replace />} />
-      </Routes>
-    </Layout>
+    <Routes>
+      {/* 전체 화면 페이지들 (레이아웃 없음) */}
+      <Route path="/character/create" element={<ProtectedRoute><CharacterCreation /></ProtectedRoute>} />
+      <Route path="/persona/create" element={<ProtectedRoute><PersonaCreation /></ProtectedRoute>} />
+      
+      {/* 탭 레이아웃이 있는 페이지들 */}
+      <Route path="/*" element={
+        <Layout>
+          <Routes>
+            <Route path="/friends" element={<Friends />} />
+            <Route path="/chat" element={<Chat />} />
+            <Route path="/foryou" element={<ForYou />} />
+            <Route path="/my" element={<My />} />
+            <Route path="/" element={<Navigate to="/friends" replace />} />
+            <Route path="*" element={<Navigate to="/friends" replace />} />
+          </Routes>
+        </Layout>
+      } />
+    </Routes>
   );
 };
 
