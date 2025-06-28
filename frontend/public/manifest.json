@@ -1,0 +1,17 @@
+{
+  "name": "Mingling",
+  "short_name": "Mingling",
+  "description": "감정 AI 캐릭터와 함께하는 특별한 대화",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#9333ea",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+} 
