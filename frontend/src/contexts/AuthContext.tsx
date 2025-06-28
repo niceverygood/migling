@@ -37,42 +37,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (firebaseUser) {
         setUser(firebaseUser);
         
-        // Check if we have a stored JWT token
-        const storedToken = getStoredToken();
+        // 임시: 백엔드 API 없이 Firebase 사용자 정보로 프로필 설정
+        const tempUserProfile = {
+          id: firebaseUser.uid,
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName,
+          photoURL: firebaseUser.photoURL,
+          jamPoints: 1000, // 기본 잼 포인트
+        };
+        setUserProfile(tempUserProfile);
         
-        if (!storedToken) {
-          // No JWT token, get one from backend
-          try {
-            const backendResponse = await authAPI.loginWithFirebase(firebaseUser);
-            setAuthToken(backendResponse.token);
-            setUserProfile(backendResponse.user);
-          } catch (error) {
-            console.error('Failed to authenticate with backend:', error);
-            // If backend auth fails, sign out from Firebase
-            await signOutUser();
-            setUser(null);
-            setUserProfile(null);
-          }
-        } else {
-          // We have a token, get current user profile
-          try {
-            const currentUser = await authAPI.getCurrentUser();
-            setUserProfile(currentUser);
-          } catch (error) {
-            console.error('Failed to get current user:', error);
-            // Token might be expired, clear it and try to re-authenticate
-            removeAuthToken();
-            try {
-              const backendResponse = await authAPI.loginWithFirebase(firebaseUser);
-              setAuthToken(backendResponse.token);
-              setUserProfile(backendResponse.user);
-            } catch (reAuthError) {
-              console.error('Re-authentication failed:', reAuthError);
-              await signOutUser();
-              setUser(null);
-              setUserProfile(null);
-            }
-          }
+        // 백엔드 연결을 시도하되, 실패해도 로그인은 성공시킴
+        try {
+          const backendResponse = await authAPI.loginWithFirebase(firebaseUser);
+          setAuthToken(backendResponse.token);
+          setUserProfile(backendResponse.user);
+          console.log('✅ Backend authentication successful');
+        } catch (error) {
+          console.warn('⚠️ Backend authentication failed, using Firebase only:', error);
+          // 백엔드 실패해도 Firebase 인증으로 계속 진행
         }
       } else {
         setUser(null);
@@ -91,10 +75,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(true);
       const result = await signInWithGoogle();
       // Firebase auth state change will handle the rest
-      console.log('Signed in with Google:', result.user.email);
+      console.log('✅ Signed in with Google:', result.user.email);
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error('❌ Login failed:', error);
       setLoading(false);
+      throw error;
     }
   };
 
@@ -106,8 +91,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUserProfile(null);
       removeAuthToken();
       setLoading(false);
+      console.log('✅ Logged out successfully');
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error('❌ Logout failed:', error);
       setLoading(false);
     }
   };
