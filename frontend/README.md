@@ -14,6 +14,7 @@ Built with React, TypeScript, Vite, Tailwind CSS
 Deployed on Vercel: https://mingling.vercel.app
 
 <!-- Trigger redeploy after repository rename -->
+<!-- Force redeploy to fix domain issues -->
 
 ## 🚀 기능
 
