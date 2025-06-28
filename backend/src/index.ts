@@ -131,5 +131,6 @@ app.listen(PORT, () => {
   console.log(`🌐 CORS Origins: ${corsOrigin}`);
   console.log(`🔐 JWT Secret: ${config.JWT_SECRET?.substring(0, 10)}...`);
   console.log(`📅 Deployed: ${new Date().toISOString()}`);
+  console.log(`🔧 GitHub Actions Deploy: Ready!`);
   console.log('⚡ Ready to accept connections!');
 }); 
