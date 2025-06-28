@@ -3,10 +3,8 @@ name: Deploy Backend to EC2
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'backend/**'
-      - '.github/workflows/deploy-backend.yml'
-  workflow_dispatch: # Manual trigger
+    paths: [ 'backend/**' ]
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -14,80 +12,125 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
-    
+      uses: actions/checkout@v3
+      
     - name: Setup Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v3
       with:
         node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: backend/package-lock.json
-    
+        
     - name: Install dependencies and build
       run: |
         cd backend
-        npm ci
+        npm ci --production=false
         npm run build
-    
-    - name: Create deployment package
+        
+    - name: Create deployment package  
       run: |
         cd backend
+        # Create deployment directory
         mkdir -p deploy
+        
+        # Copy built application
         cp -r build deploy/
-        cp -r node_modules deploy/
         cp package*.json deploy/
         cp -r migrations deploy/
-        cp -r scripts deploy/
-        tar -czf deploy.tar.gz -C deploy .
-    
-    - name: Deploy to EC2
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
-        key: ${{ secrets.EC2_PRIVATE_KEY }}
-        port: 22
-        script: |
-          # Navigate to project directory
-          cd ~/mingling/backend
-          
-          # Stop current application
-          pm2 stop mingling-backend || true
-          
-          # Backup current version
-          if [ -d "current" ]; then
-            rm -rf backup
-            mv current backup
-          fi
-          
-          # Create new deployment directory
-          mkdir -p current
-          
-          # Download and extract new version
-          cd current
-          
-          # Here you would typically download the deployment package
-          # For now, we'll pull from git and build
-          cd ~/mingling
-          git pull origin main
-          
-          cd backend
-          npm ci --production=false
-          npm run build
-          
-          # Run migrations
-          npm run migrate
-          
-          # Start application with PM2
-          pm2 start build/index.js --name mingling-backend || pm2 restart mingling-backend
-          
-          # Save PM2 configuration
-          pm2 save
-          
-          # Show status
-          pm2 status
-    
+        
+        # Create deployment script
+        cat > deploy/deploy.sh << 'EOF'
+        #!/bin/bash
+        set -e
+        
+        echo "🚀 Starting deployment..."
+        
+        # Navigate to application directory
+        cd /home/ubuntu/mingling/backend
+        
+        # Stop current application
+        pm2 stop mingling-backend || true
+        
+        # Backup current version
+        if [ -d "current" ]; then
+          rm -rf backup
+          mv current backup
+        fi
+        
+        # Create new deployment directory
+        mkdir -p current
+        
+        # Update from git
+        cd /home/ubuntu/mingling
+        git pull origin main
+        
+        # Install dependencies and build
+        cd backend
+        npm ci --production=false
+        npm run build
+        
+        # Run migrations
+        npm run migrate
+        
+        # Start application with PM2
+        pm2 start build/index.js --name mingling-backend || pm2 restart mingling-backend
+        
+        # Save PM2 configuration
+        pm2 save
+        
+        echo "✅ Deployment completed!"
+        EOF
+        
+        chmod +x deploy/deploy.sh
+        
+    - name: Deploy via AWS SSM (Session Manager)
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ secrets.AWS_REGION }}
+        INSTANCE_ID: ${{ secrets.EC2_INSTANCE_ID }}
+      run: |
+        # Install AWS CLI
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+        sudo ./aws/install
+        
+        # Execute deployment script via SSM
+        aws ssm send-command \
+          --instance-ids "$INSTANCE_ID" \
+          --document-name "AWS-RunShellScript" \
+          --comment "Deploy Mingling Backend" \
+          --parameters 'commands=[
+            "cd /home/ubuntu/mingling",
+            "git pull origin main",
+            "cd backend", 
+            "npm ci --production=false",
+            "npm run build",
+            "npm run migrate",
+            "pm2 stop mingling-backend || true",
+            "pm2 start build/index.js --name mingling-backend || pm2 restart mingling-backend",
+            "pm2 save",
+            "echo \"✅ Deployment completed!\""
+          ]' \
+          --region "$AWS_REGION"
+
     - name: Health Check
       run: |
-        sleep 10
-        curl -f ${{ secrets.EC2_HEALTH_CHECK_URL }}/api/health || exit 1 
+        echo "⏳ Waiting for deployment to complete..."
+        sleep 60
+        
+        # Check server health
+        response=$(curl -s "${{ secrets.EC2_HEALTH_CHECK_URL }}/api/health" || echo "failed")
+        if [[ $response == *"production"* ]]; then
+          echo "✅ Health check passed!"
+          echo "$response"
+        else
+          echo "❌ Health check failed!"
+          echo "$response"
+          exit 1
+        fi
+        
+    - name: Post Checkout code
+      uses: actions/checkout@v3
+      if: success()
+      
+    - name: Complete job  
+      run: echo "🎉 Deployment successful!" 
