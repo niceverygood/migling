@@ -3,14 +3,14 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "env": {
-    "REACT_APP_API_BASE_URL": "http://52.63.124.130:3001",
-    "REACT_APP_FIREBASE_API_KEY": "AIzaSyCpGXULewwRPmUiljiFCZcZ25QPMYEVUn4",
-    "REACT_APP_FIREBASE_AUTH_DOMAIN": "mingling-3f2d5.firebaseapp.com",
-    "REACT_APP_FIREBASE_PROJECT_ID": "mingling-3f2d5",
-    "REACT_APP_FIREBASE_STORAGE_BUCKET": "mingling-3f2d5.firebasestorage.app",
-    "REACT_APP_FIREBASE_MESSAGING_SENDER_ID": "127809706418",
-    "REACT_APP_FIREBASE_APP_ID": "1:127809706418:web:97eba244663b84a786ecab",
-    "REACT_APP_FIREBASE_MEASUREMENT_ID": "G-KYR28WQL23"
+    "VITE_API_BASE_URL": "https://52.63.124.130:3001",
+    "VITE_FIREBASE_API_KEY": "AIzaSyCpGXULewwRPmUiljiFCZcZ25QPMYEVUn4",
+    "VITE_FIREBASE_AUTH_DOMAIN": "mingling-3f2d5.firebaseapp.com",
+    "VITE_FIREBASE_PROJECT_ID": "mingling-3f2d5",
+    "VITE_FIREBASE_STORAGE_BUCKET": "mingling-3f2d5.firebasestorage.app",
+    "VITE_FIREBASE_MESSAGING_SENDER_ID": "127809706418",
+    "VITE_FIREBASE_APP_ID": "1:127809706418:web:97eba244663b84a786ecab",
+    "VITE_FIREBASE_MEASUREMENT_ID": "G-KYR28WQL23"
   },
   "headers": [
     {

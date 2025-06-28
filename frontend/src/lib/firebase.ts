@@ -2,13 +2,13 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, type User } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCpGXULewwRPmUiljiFCZcZ25QPMYEVUn4",
-  authDomain: "mingling-3f2d5.firebaseapp.com",
-  projectId: "mingling-3f2d5",
-  storageBucket: "mingling-3f2d5.firebasestorage.app",
-  messagingSenderId: "127809706418",
-  appId: "1:127809706418:web:97eba244663b84a786ecab",
-  measurementId: "G-KYR28WQL23"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCpGXULewwRPmUiljiFCZcZ25QPMYEVUn4",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "mingling-3f2d5.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "mingling-3f2d5",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "mingling-3f2d5.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "127809706418",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:127809706418:web:97eba244663b84a786ecab",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-KYR28WQL23"
 };
 
 // Initialize Firebase
