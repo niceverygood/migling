@@ -7,8 +7,8 @@ const firebaseConfig = {
   projectId: "mingling-3f2d5",
   storageBucket: "mingling-3f2d5.firebasestorage.app",
   messagingSenderId: "127809706418",
-  appId: "1:127809706418:web:186a15b6e16d89d886ecab",
-  measurementId: "G-YS152BFG4C"
+  appId: "1:127809706418:web:97eba244663b84a786ecab",
+  measurementId: "G-KYR28WQL23"
 };
 
 // Initialize Firebase
