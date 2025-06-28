@@ -71,10 +71,11 @@ router.get('/', async (req, res) => {
       FROM characters 
       WHERE ${whereClause} 
       ORDER BY created_at DESC 
-      LIMIT ? OFFSET ?
+      LIMIT ${limitNum + 1} OFFSET ${offset}
     `;
     
-    params.push(parseInt(String(limitNum + 1)), parseInt(String(offset))); // 명시적 정수 변환
+    // LIMIT/OFFSET을 쿼리에 직접 포함시켜서 파라미터 에러 방지
+    // params.push(parseInt(String(limitNum + 1)), parseInt(String(offset))); // 명시적 정수 변환
     
     const [rows] = await pool.execute(query, params);
     const characters = rows as any[];

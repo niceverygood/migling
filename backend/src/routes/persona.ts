@@ -21,8 +21,8 @@ router.get('/', async (req, res) => {
        FROM personas 
        WHERE user_id = ? 
        ORDER BY is_default DESC, created_at DESC 
-       LIMIT ? OFFSET ?`,
-      [userId, parseInt(String(limit + 1)), parseInt(String(offset))] // 명시적 정수 변환
+       LIMIT ${limit + 1} OFFSET ${offset}`,
+      [userId] // LIMIT/OFFSET은 쿼리에 직접 포함
     );
     
     const personas = (rows as any[]).slice(0, limit);
