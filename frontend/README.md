@@ -1,6 +1,19 @@
 # Mingling Frontend
 
-감성 AI 캐릭터 챗봇 앱의 모바일 웹 프론트엔드입니다.
+Emotion AI Character Chat App Frontend
+
+Built with React, TypeScript, Vite, Tailwind CSS
+
+## Features
+- Firebase Authentication (Google Login)
+- Real-time Chat with AI Characters
+- Mobile-first Design
+- PWA Support
+
+## Deployment
+Deployed on Vercel: https://mingling.vercel.app
+
+<!-- Trigger redeploy after repository rename -->
 
 ## 🚀 기능
 
@@ -159,6 +172,6 @@ npm install
 - GitHub Issues
 - 개발팀 연락처
 
-## �� 라이선스
+## 📋 라이선스
 
 MIT License
