@@ -22,7 +22,7 @@ router.get('/', async (req, res) => {
        WHERE user_id = ? 
        ORDER BY is_default DESC, created_at DESC 
        LIMIT ? OFFSET ?`,
-      [userId, limit + 1, offset] // LIMIT+1로 hasMore 판단
+      [userId, parseInt(String(limit + 1)), parseInt(String(offset))] // 명시적 정수 변환
     );
     
     const personas = (rows as any[]).slice(0, limit);

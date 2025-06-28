@@ -74,7 +74,7 @@ router.get('/', async (req, res) => {
       LIMIT ? OFFSET ?
     `;
     
-    params.push(limitNum + 1, offset); // +1로 다음 페이지 존재 여부 확인
+    params.push(parseInt(String(limitNum + 1)), parseInt(String(offset))); // 명시적 정수 변환
     
     const [rows] = await pool.execute(query, params);
     const characters = rows as any[];

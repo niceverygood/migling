@@ -19,7 +19,12 @@ const PORT = config.PORT;
  * 운영: 특정 도메인만 허용
  */
 const corsOrigin = config.NODE_ENV === 'production' 
-  ? ['https://mingling.vercel.app', 'https://mingling-*.vercel.app']
+  ? [
+      'https://mingling.vercel.app', 
+      'https://mingling-*.vercel.app',
+      'https://mingling-2vehp37lc-malshues-projects.vercel.app',
+      'https://*.vercel.app'
+    ]
   : [config.CLIENT_ORIGIN, 'http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'];
 
 app.use(cors({
