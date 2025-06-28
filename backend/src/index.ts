@@ -1,26 +1,29 @@
-import 'dotenv/config';
+import './config/environment'; // Load environment config first
 import express from 'express';
 import cors from 'cors';
+import config from './config/environment';
 import './openai'; // Initialize OpenAI client
 import './db'; // Initialize Database connection
 import characterRoutes from './routes/character';
 import chatRouter from './routes/chat';
 import healthRouter from './routes/health';
 import authRouter from './routes/auth';
+import personaRouter from './routes/persona';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = config.PORT;
 
 /**
- * CORS Configuration for Production Deployment
- * 
- * EC2 배포 시 유의사항:
- * - origin: '*' 허용으로 설정하여 프론트엔드 도메인 제한 없음
- * - credentials: true로 설정하여 쿠키/인증 헤더 허용
- * - Access-Control-Allow-Origin, Access-Control-Allow-Headers 등 포함
+ * CORS Configuration - Environment based
+ * 개발: localhost 허용
+ * 운영: 특정 도메인만 허용
  */
+const corsOrigin = config.NODE_ENV === 'production' 
+  ? ['https://mingling.vercel.app', 'https://mingling-*.vercel.app']
+  : [config.CLIENT_ORIGIN, 'http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'];
+
 app.use(cors({
-  origin: '*', // 모든 origin 허용 (프로덕션에서는 특정 도메인으로 제한 권장)
+  origin: corsOrigin,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: [
@@ -49,6 +52,7 @@ app.use((req, res, next) => {
 app.use('/api/health', healthRouter);        // Health check with DB status
 app.use('/api/auth', authRouter);            // Firebase authentication
 app.use('/api/characters', characterRoutes); // Character management
+app.use('/api/personas', personaRouter);     // Persona management
 app.use('/api/chat', chatRouter);            // Chat functionality
 
 // Root endpoint
@@ -88,10 +92,11 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Mingling Backend Server started`);
+  console.log(`\n🚀 Mingling Backend Server started`);
   console.log(`📍 Port: ${PORT}`);
-  console.log(`🌐 CORS: All origins allowed with credentials`);
-  console.log(`🐬 Database: AWS RDS Aurora MySQL`);
-  console.log(`💾 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`⚡ Ready to accept connections!`);
+  console.log(`💾 Environment: ${config.NODE_ENV}`);
+  console.log(`🗄️  Database: ${config.DB_HOST}:${config.DB_PORT}/${config.DB_NAME}`);
+  console.log(`🌐 CORS Origins: ${corsOrigin}`);
+  console.log(`🔐 JWT Secret: ${config.JWT_SECRET?.substring(0, 10)}...`);
+  console.log(`⚡ Ready to accept connections!\n`);
 }); 
