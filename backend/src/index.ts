@@ -24,7 +24,9 @@ const corsOrigin = config.NODE_ENV === 'production'
   ? [
       'https://mingling.vercel.app', 
       'https://mingling-*.vercel.app',
-      'https://mingling-2vehp37lc-malshues-projects.vercel.app',
+      'https://mingling-hjlzrzm13-malshues-projects.vercel.app',
+      'https://mingling-pk6lb4itb-malshues-projects.vercel.app',
+      'https://mingling-4pcqme98v-malshues-projects.vercel.app',
       'https://*.vercel.app'
     ]
   : [config.CLIENT_ORIGIN, 'http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3004'];
@@ -49,8 +51,27 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Static file serving for uploaded images
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Static file serving for uploaded images - 절대 경로로 변경
+const uploadsPath = path.resolve(__dirname, '../uploads');
+console.log(`📁 Static files serving from: ${uploadsPath}`);
+
+// uploads 디렉토리 존재 확인 및 생성
+import fs from 'fs';
+if (!fs.existsSync(uploadsPath)) {
+  fs.mkdirSync(uploadsPath, { recursive: true });
+  console.log(`📁 Created uploads directory: ${uploadsPath}`);
+}
+
+app.use('/uploads', express.static(uploadsPath, {
+  setHeaders: (res, path) => {
+    // 이미지 파일에 대한 CORS 헤더 설정
+    res.set({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET',
+      'Cache-Control': 'public, max-age=31536000'
+    });
+  }
+}));
 
 // Request logging middleware
 app.use((req, res, next) => {

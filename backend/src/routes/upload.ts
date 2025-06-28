@@ -49,20 +49,28 @@ router.post('/avatar', upload.single('avatar'), (req: Request, res: Response) =>
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // 환경에 따른 서버 URL 설정
-    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-    const host = process.env.NODE_ENV === 'production' 
-      ? process.env.PRODUCTION_HOST || 'ec2-52-63-124-130.ap-southeast-2.compute.amazonaws.com'
-      : 'localhost';
-    const port = process.env.NODE_ENV === 'production' 
-      ? process.env.PRODUCTION_PORT || '3001'
-      : process.env.PORT || '3003';
+    // 환경에 따른 서버 URL 설정 - 개선된 버전
+    let baseUrl: string;
     
-    const baseUrl = process.env.NODE_ENV === 'production' 
-      ? `${protocol}://${host}:${port}`
-      : `${protocol}://${host}:${port}`;
+    if (process.env.NODE_ENV === 'production') {
+      // 운영 환경: AWS EC2 또는 설정된 도메인 사용
+      const productionHost = process.env.PRODUCTION_HOST || '52.63.124.130';
+      const productionPort = process.env.PRODUCTION_PORT || '3001';
+      baseUrl = `http://${productionHost}:${productionPort}`;
+    } else {
+      // 개발 환경: localhost 사용
+      const devPort = process.env.PORT || '3003';
+      baseUrl = `http://localhost:${devPort}`;
+    }
 
     const fileUrl = `${baseUrl}/uploads/avatars/${req.file.filename}`;
+    
+    console.log('🌐 File URL generated:', {
+      environment: process.env.NODE_ENV,
+      baseUrl,
+      filename: req.file.filename,
+      fullUrl: fileUrl
+    });
 
     console.log('✅ Avatar uploaded:', {
       filename: req.file.filename,

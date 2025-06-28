@@ -1,6 +1,16 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3003'; // 개발 환경에서 직접 설정
+// 환경별 API URL 자동 설정
+const API_BASE_URL = (() => {
+  // 운영 환경에서는 환경변수 우선, 없으면 배포된 백엔드 URL 사용
+  if (import.meta.env.PROD) {
+    return import.meta.env.VITE_API_BASE_URL || 'http://52.63.124.130:3001';
+  }
+  // 개발 환경에서는 로컬 백엔드 사용
+  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:3003';
+})();
+
+console.log('🌐 API Base URL:', API_BASE_URL, '| Environment:', import.meta.env.MODE);
 
 // Create axios instance
 export const api = axios.create({
