@@ -124,11 +124,12 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 app.listen(PORT, () => {
-  console.log(`\n🚀 Mingling Backend Server started`);
+  console.log('🚀 Mingling Backend Server started');
   console.log(`📍 Port: ${PORT}`);
   console.log(`💾 Environment: ${config.NODE_ENV}`);
   console.log(`🗄️  Database: ${config.DB_HOST}:${config.DB_PORT}/${config.DB_NAME}`);
   console.log(`🌐 CORS Origins: ${corsOrigin}`);
   console.log(`🔐 JWT Secret: ${config.JWT_SECRET?.substring(0, 10)}...`);
-  console.log(`⚡ Ready to accept connections!\n`);
+  console.log(`📅 Deployed: ${new Date().toISOString()}`);
+  console.log('⚡ Ready to accept connections!');
 }); 
