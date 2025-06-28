@@ -190,4 +190,26 @@ echo "6. ⏳ Database connection: Check logs for DB connection success"
 echo ""
 echo -e "${GREEN}🌐 Your API is now available at:${NC}"
 echo "  http://$(curl -s http://checkip.amazonaws.com):$PORT"
-echo "  Health: http://$(curl -s http://checkip.amazonaws.com):$PORT/api/health" 
+echo "  Health: http://$(curl -s http://checkip.amazonaws.com):$PORT/api/health"
+
+# 1. EC2 접속
+ssh -i mingling-key.pem ec2-user@52.63.124.130
+
+# 2. 백엔드 디렉토리로 이동
+cd ~/mingling/backend
+
+# 3. 현재 .env 확인
+cat .env | grep DB_HOST
+
+# 4. 올바른 엔드포인트로 수정
+sed -i 's/mingling\.cluster/mingling-cluster/g' .env
+
+# 5. 수정 확인
+cat .env | grep DB_HOST
+
+# 6. 백엔드 재시작
+pm2 restart mingling-backend
+
+# 7. 5초 후 테스트
+sleep 5
+curl http://localhost:3001/api/health 
