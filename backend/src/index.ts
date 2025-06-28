@@ -6,6 +6,7 @@ import './db'; // Initialize Database connection
 import characterRoutes from './routes/character';
 import chatRouter from './routes/chat';
 import healthRouter from './routes/health';
+import authRouter from './routes/auth';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -46,6 +47,7 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api/health', healthRouter);        // Health check with DB status
+app.use('/api/auth', authRouter);            // Firebase authentication
 app.use('/api/characters', characterRoutes); // Character management
 app.use('/api/chat', chatRouter);            // Chat functionality
 
@@ -57,6 +59,8 @@ app.get('/', (req, res) => {
     timestamp: new Date().toISOString(),
     endpoints: [
       'GET /api/health - Health check with database status',
+      'POST /api/auth/firebase - Firebase authentication',
+      'GET /api/auth/me - Get current user info',
       'GET /api/characters - Character management',
       'POST /api/chat - Chat functionality'
     ]
