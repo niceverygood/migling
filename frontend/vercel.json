@@ -12,6 +12,12 @@
     "VITE_FIREBASE_APP_ID": "1:127809706418:web:97eba244663b84a786ecab",
     "VITE_FIREBASE_MEASUREMENT_ID": "G-KYR28WQL23"
   },
+  "rewrites": [
+    {
+      "source": "/((?!api/.*).*)",
+      "destination": "/index.html"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

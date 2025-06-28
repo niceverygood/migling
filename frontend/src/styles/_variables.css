@@ -1,1 +1,28 @@
- 
+/* MINGLE_COLORS - 브랜드 컬러 시스템 */
+:root {
+  /* Primary Colors */
+  --mingle-rose: #F7BFD4;
+  --mint-mix: #C6EEE7;
+  --twilight-blue: #95B8F1;
+  --peach-mingle: #FFD6B9;
+  
+  /* Base Colors */
+  --silky-white: #FAFAFA;
+  --night-ink: #333333;
+  
+  /* Semantic Colors */
+  --bg-primary: var(--silky-white);
+  --text-primary: var(--night-ink);
+  --accent-primary: var(--mingle-rose);
+  --accent-secondary: var(--mint-mix);
+  --accent-hover: var(--twilight-blue);
+  --accent-highlight: var(--peach-mingle);
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: var(--night-ink);
+    --text-primary: var(--silky-white);
+  }
+} 
