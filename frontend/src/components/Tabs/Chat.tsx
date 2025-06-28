@@ -1,6 +1,9 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Chat: React.FC = () => {
+  const navigate = useNavigate();
+  
   const chatRooms = [
     {
       id: 1,
@@ -41,15 +44,15 @@ const Chat: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-silky-white pb-20 safe-top">
       {/* Header */}
-      <div className="bg-white px-4 py-6 border-b border-gray-200">
+      <div className="bg-white px-4 py-6 border-b border-gray-200 safe-top">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">채팅</h1>
             <p className="text-gray-600 text-sm mt-1">AI 친구들과 대화를 나누세요</p>
           </div>
-          <button className="bg-purple-100 hover:bg-purple-200 text-purple-700 p-2 rounded-lg transition-colors">
+          <button className="bg-mint-mix hover:bg-twilight-blue active:bg-twilight-blue text-night-ink p-2 rounded-lg transition-colors touch-target">
             ✏️
           </button>
         </div>
@@ -61,10 +64,10 @@ const Chat: React.FC = () => {
           <input
             type="text"
             placeholder="대화 검색..."
-            className="w-full pl-10 pr-4 py-3 bg-white rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="input-field pl-12"
           />
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
-            <span className="text-gray-400">🔍</span>
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center">
+            <span className="text-gray-400 text-lg">🔍</span>
           </div>
         </div>
       </div>
@@ -72,22 +75,23 @@ const Chat: React.FC = () => {
       {/* Quick Actions */}
       <div className="px-4 mb-4">
         <div className="flex space-x-3">
-          <button className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-xl font-medium transition-colors">
+          <button className="flex-1 btn-primary py-3 px-4 touch-target">
             🤖 새로운 AI 친구
           </button>
-          <button className="flex-1 bg-white hover:bg-gray-50 text-gray-700 py-3 px-4 rounded-xl font-medium border border-gray-200 transition-colors">
+          <button className="flex-1 btn-secondary py-3 px-4 touch-target">
             👥 그룹 채팅
           </button>
         </div>
       </div>
 
       {/* Chat Rooms */}
-      <div className="px-4">
-        <div className="space-y-2">
+      <div className="px-4 pb-6">
+        <div className="space-y-3">
           {chatRooms.map((room) => (
             <div
               key={room.id}
-              className="bg-white rounded-xl p-4 flex items-center space-x-3 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => navigate(`/chat/${room.id}`)}
+              className="card p-4 flex items-center space-x-3 hover:shadow-lg transition-shadow cursor-pointer touch-target"
             >
               <div className="relative">
                 <div className="text-3xl">{room.avatar}</div>
@@ -105,7 +109,7 @@ const Chat: React.FC = () => {
               </div>
               
               {room.unreadCount > 0 && (
-                <div className="bg-purple-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                <div className="bg-mingle-rose text-silky-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
                   {room.unreadCount}
                 </div>
               )}
@@ -116,21 +120,21 @@ const Chat: React.FC = () => {
 
       {/* Empty State (if no chats) */}
       {chatRooms.length === 0 && (
-        <div className="flex flex-col items-center justify-center h-64">
+        <div className="flex flex-col items-center justify-center h-64 px-4">
           <div className="text-6xl mb-4">💭</div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">아직 대화가 없어요</h3>
           <p className="text-gray-600 text-center text-sm mb-6">
             새로운 AI 친구를 추가하고<br />첫 대화를 시작해보세요!
           </p>
-          <button className="bg-purple-600 hover:bg-purple-700 text-white py-3 px-6 rounded-xl font-medium transition-colors">
+          <button className="btn-primary touch-target">
             AI 친구 추가하기
           </button>
         </div>
       )}
 
       {/* New Chat Button */}
-      <div className="fixed bottom-20 right-4">
-        <button className="bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-full shadow-lg transition-all">
+      <div className="fixed bottom-24 right-4 z-40 max-w-[430px] mx-auto">
+        <button className="bg-mingle-rose hover:bg-twilight-blue active:bg-twilight-blue text-silky-white p-4 rounded-full shadow-lg transition-all touch-target">
           <span className="text-xl">💬</span>
         </button>
       </div>

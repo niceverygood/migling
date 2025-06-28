@@ -129,31 +129,23 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/personas/default - 기본 persona 조회 (없으면 생성)
+// GET /api/personas/default - 기본 persona 조회 (자동 생성 없이)
 router.get('/default', async (req, res) => {
   try {
     const userId = 1; // 임시로 user_id = 1 사용
     
     // 기본 persona가 있는지 확인
-    let [rows] = await pool.execute(
+    const [rows] = await pool.execute(
       'SELECT * FROM personas WHERE user_id = ? AND is_default = TRUE LIMIT 1',
       [userId]
     );
     
     if ((rows as any[]).length === 0) {
-      // 기본 persona가 없으면 생성
-      const [result] = await pool.execute(
-        'INSERT INTO personas (user_id, name, description, is_default) VALUES (?, ?, ?, TRUE)',
-        [userId, 'Me', '나의 기본 페르소나']
-      );
-      
-      const insertId = (result as any).insertId;
-      [rows] = await pool.execute('SELECT * FROM personas WHERE id = ?', [insertId]);
-      
-      console.log(`✅ Default persona created for user ${userId}`);
+      // 기본 persona가 없으면 null 반환 (자동 생성하지 않음)
+      return res.json(null);
     }
     
-    res.json((rows as any)[0]);
+    res.json((rows as any[])[0]);
   } catch (error) {
     console.error('Get default persona error:', error);
     res.status(500).json({ error: 'Failed to get default persona' });

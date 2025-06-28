@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { characterAPI, personaAPI } from '../lib/api';
 
 interface Message {
@@ -35,6 +35,7 @@ interface AffectionData {
 
 export default function ChatRoom() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [character, setCharacter] = useState<Character | null>(null);
@@ -42,6 +43,7 @@ export default function ChatRoom() {
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
   const [affection, setAffection] = useState<AffectionData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingPersonas, setIsCheckingPersonas] = useState(true);
 
   // 초기 데이터 로딩
   useEffect(() => {
@@ -49,30 +51,61 @@ export default function ChatRoom() {
       if (!id) return;
 
       try {
+        setIsCheckingPersonas(true);
+
         // 캐릭터 정보 로딩
         const characterData = await characterAPI.getCharacter(id);
         setCharacter(characterData);
 
-        // 기본 persona 로딩
-        const defaultPersona = await personaAPI.getDefaultPersona();
-        setSelectedPersona(defaultPersona);
+        // 먼저 모든 페르소나를 가져와서 체크
+        const personasResponse = await personaAPI.getAllPersonas();
+        const allPersonas = Array.isArray(personasResponse) ? personasResponse : personasResponse.personas || [];
+        
+        // 페르소나가 없으면 페르소나 생성 페이지로 이동
+        if (!allPersonas || allPersonas.length === 0) {
+          console.log('📝 No personas found, redirecting to persona creation');
+          // 현재 채팅방 ID를 저장하여 페르소나 생성 후 돌아올 수 있도록 함
+          localStorage.setItem('pendingChatId', id);
+          navigate('/persona/create');
+          return;
+        }
 
-        // 모든 persona 로딩
-        const allPersonas = await personaAPI.getAllPersonas();
         setPersonas(allPersonas);
 
-        // 호감도 정보 로딩
+        // 기본 페르소나 찾기 - For You에서 선택한 페르소나 우선 사용
+        let defaultPersona = null;
+        const selectedPersonaId = localStorage.getItem('selectedPersonaId');
+        
+        if (selectedPersonaId) {
+          defaultPersona = allPersonas.find((p: Persona) => p.id === parseInt(selectedPersonaId));
+          // 사용 후 localStorage에서 제거
+          localStorage.removeItem('selectedPersonaId');
+        }
+        
+        if (!defaultPersona) {
+          defaultPersona = allPersonas.find((p: Persona) => p.is_default);
+        }
+        
+        if (!defaultPersona && allPersonas.length > 0) {
+          defaultPersona = allPersonas[0]; // 기본 페르소나가 없으면 첫 번째 페르소나 사용
+        }
+
         if (defaultPersona) {
+          setSelectedPersona(defaultPersona);
+          
+          // 호감도 정보 로딩
           const affectionData = await characterAPI.getAffection(id, defaultPersona.id);
           setAffection(affectionData);
         }
       } catch (error) {
         console.error('Failed to load initial data:', error);
+      } finally {
+        setIsCheckingPersonas(false);
       }
     };
 
     loadInitialData();
-  }, [id]);
+  }, [id, navigate]);
 
   // Persona 변경 시 호감도 정보 업데이트
   useEffect(() => {
@@ -136,54 +169,72 @@ export default function ChatRoom() {
   };
 
   const getAffectionColor = (score: number) => {
-    if (score >= 80) return 'text-pink-500';
-    if (score >= 60) return 'text-green-500';
-    if (score >= 40) return 'text-blue-500';
-    if (score >= 20) return 'text-yellow-500';
-    return 'text-red-500';
+    if (score >= 80) return 'text-mingle-rose';
+    if (score >= 60) return 'text-mint-mix';
+    if (score >= 40) return 'text-twilight-blue';
+    if (score >= 20) return 'text-peach-mingle';
+    return 'text-gray-500';
   };
 
   const getAffectionBgColor = (score: number) => {
-    if (score >= 80) return 'bg-pink-500';
-    if (score >= 60) return 'bg-green-500';
-    if (score >= 40) return 'bg-blue-500';
-    if (score >= 20) return 'bg-yellow-500';
-    return 'bg-red-500';
+    if (score >= 80) return 'bg-mingle-rose';
+    if (score >= 60) return 'bg-mint-mix';
+    if (score >= 40) return 'bg-twilight-blue';
+    if (score >= 20) return 'bg-peach-mingle';
+    return 'bg-gray-500';
   };
 
-  if (!character || !selectedPersona) {
+  if (!character || (!selectedPersona && !isCheckingPersonas)) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-gray-500">로딩 중...</div>
+      <div className="min-h-screen bg-silky-white mobile-container">
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mingle-rose mx-auto mb-4"></div>
+            <p className="text-night-ink">
+              {isCheckingPersonas ? '페르소나를 확인하는 중...' : '로딩 중...'}
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-silky-white mobile-container">
       {/* Header - 캐릭터 정보 및 호감도 */}
-      <div className="bg-white shadow-sm border-b p-4">
+      <div className="bg-white shadow-sm border-b p-4 safe-top">
+        {/* 뒤로 가기 및 캐릭터 정보 */}
+        <div className="flex items-center space-x-3 mb-3">
+          <button 
+            onClick={() => navigate(-1)}
+            className="touch-target p-1 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors"
+          >
+            <span className="text-lg">←</span>
+          </button>
+          <h1 className="text-lg font-semibold text-gray-800">채팅</h1>
+        </div>
+        
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+          <div className="flex items-center space-x-3 flex-1 min-w-0">
+            <div className="w-12 h-12 bg-gradient-to-br from-mingle-rose to-twilight-blue rounded-full flex items-center justify-center text-silky-white font-bold text-lg">
               {character.name[0]}
             </div>
-            <div>
-              <h1 className="text-lg font-semibold text-gray-800">{character.name}</h1>
-              <p className="text-sm text-gray-500">{character.description}</p>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg font-semibold text-gray-800 truncate">{character.name}</h1>
+              <p className="text-sm text-gray-500 truncate">{character.description}</p>
             </div>
           </div>
 
           {/* 호감도 표시 */}
           {affection && (
-            <div className="text-right">
-              <div className={`text-lg font-bold ${getAffectionColor(affection.affectionScore)}`}>
+            <div className="text-right flex-shrink-0 ml-2">
+              <div className={`text-sm font-bold ${getAffectionColor(affection.affectionScore)}`}>
                 {affection.affectionLevel}
               </div>
-              <div className="text-sm text-gray-500">
-                {affection.affectionScore}/100 • {affection.totalMessages}회 대화
+              <div className="text-xs text-gray-500">
+                {affection.affectionScore}/100
               </div>
-              <div className="w-24 h-2 bg-gray-200 rounded-full mt-1">
+              <div className="w-16 h-1.5 bg-gray-200 rounded-full mt-1">
                 <div 
                   className={`h-full rounded-full ${getAffectionBgColor(affection.affectionScore)}`}
                   style={{ width: `${affection.affectionScore}%` }}
@@ -195,14 +246,14 @@ export default function ChatRoom() {
 
         {/* Persona 선택 */}
         <div className="mt-3 flex items-center space-x-2">
-          <span className="text-sm text-gray-600">페르소나:</span>
+          <span className="text-sm text-gray-600 flex-shrink-0">페르소나:</span>
           <select 
             value={selectedPersona?.id || ''} 
             onChange={(e) => {
               const persona = personas.find(p => p.id === Number(e.target.value));
               if (persona) setSelectedPersona(persona);
             }}
-            className="text-sm border rounded px-2 py-1 bg-white"
+            className="text-sm border rounded-lg px-3 py-1.5 bg-white flex-1 min-w-0 touch-target"
           >
             {personas.map(persona => (
               <option key={persona.id} value={persona.id}>
@@ -214,13 +265,13 @@ export default function ChatRoom() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 hide-scrollbar">
         {messages.map((message, index) => (
           <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+            <div className={`max-w-[280px] px-4 py-3 rounded-2xl ${
               message.role === 'user' 
-                ? 'bg-blue-500 text-white' 
-                : 'bg-white border shadow-sm'
+                ? 'chat-bubble-user' 
+                : 'chat-bubble-character'
             }`}>
               <p className="text-sm">{message.content}</p>
               
@@ -229,8 +280,8 @@ export default function ChatRoom() {
                 <div className="mt-2 text-xs">
                   <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                     message.affection.change > 0 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
+                      ? 'bg-mint-mix text-night-ink' 
+                      : 'bg-gray-100 text-night-ink'
                   }`}>
                     {message.affection.change > 0 ? '💕' : '💔'} 
                     {message.affection.change > 0 ? '+' : ''}{message.affection.change}
@@ -243,11 +294,11 @@ export default function ChatRoom() {
         
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-white border shadow-sm rounded-lg px-4 py-2">
+            <div className="chat-bubble-character">
               <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-mingle-rose rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-mingle-rose rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                <div className="w-2 h-2 bg-mingle-rose rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
               </div>
             </div>
           </div>
@@ -255,20 +306,20 @@ export default function ChatRoom() {
       </div>
 
       {/* Input */}
-      <div className="bg-white border-t p-4">
-        <div className="flex space-x-2">
+      <div className="bg-white border-t p-4 safe-bottom">
+        <div className="flex space-x-3">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder={`${selectedPersona.name}으로서 ${character.name}에게 메시지를 보내세요...`}
-            className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder={`${selectedPersona?.name || '나'}으로서 ${character.name}에게 메시지...`}
+            className="input-field flex-1"
             disabled={isLoading}
           />
           <button
             onClick={sendMessage}
             disabled={isLoading || !input.trim()}
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="btn-primary px-6 py-3 touch-target disabled:opacity-50 disabled:cursor-not-allowed"
           >
             전송
           </button>

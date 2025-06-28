@@ -17,12 +17,11 @@ router.post('/', async (req, res) => {
       );
       
       if ((personaRows as any[]).length === 0) {
-        // 기본 persona가 없으면 생성
-        const [result] = await pool.execute(
-          'INSERT INTO personas (user_id, name, description, is_default) VALUES (?, ?, ?, TRUE)',
-          [1, 'Me', '나의 기본 페르소나']
-        );
-        finalPersonaId = (result as any).insertId;
+        // 기본 persona가 없으면 에러 반환
+        return res.status(400).json({ 
+          error: 'No personas found. Please create a persona first.',
+          code: 'NO_PERSONA'
+        });
       } else {
         finalPersonaId = (personaRows as any[])[0].id;
       }

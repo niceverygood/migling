@@ -1,6 +1,7 @@
 import './config/environment'; // Load environment config first
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import config from './config/environment';
 import './openai'; // Initialize OpenAI client
 import './db'; // Initialize Database connection
@@ -9,6 +10,7 @@ import chatRouter from './routes/chat';
 import healthRouter from './routes/health';
 import authRouter from './routes/auth';
 import personaRouter from './routes/persona';
+import uploadRouter from './routes/upload';
 
 const app = express();
 const PORT = config.PORT;
@@ -25,7 +27,7 @@ const corsOrigin = config.NODE_ENV === 'production'
       'https://mingling-2vehp37lc-malshues-projects.vercel.app',
       'https://*.vercel.app'
     ]
-  : [config.CLIENT_ORIGIN, 'http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'];
+  : [config.CLIENT_ORIGIN, 'http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3004'];
 
 app.use(cors({
   origin: corsOrigin,
@@ -47,6 +49,9 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Static file serving for uploaded images
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Request logging middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
@@ -59,6 +64,7 @@ app.use('/api/auth', authRouter);            // Firebase authentication
 app.use('/api/characters', characterRoutes); // Character management
 app.use('/api/personas', personaRouter);     // Persona management
 app.use('/api/chat', chatRouter);            // Chat functionality
+app.use('/api/upload', uploadRouter);        // File upload functionality
 
 // Root endpoint
 app.get('/', (req, res) => {

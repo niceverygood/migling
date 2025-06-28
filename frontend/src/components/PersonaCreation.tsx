@@ -24,6 +24,10 @@ const PersonaCreation: React.FC = () => {
     avatar_url: ''
   });
   const [isLoading, setIsLoading] = useState(false);
+  
+  // 채팅을 위해 페르소나 생성이 필요한지 확인
+  const pendingChatId = localStorage.getItem('pendingChatId');
+  const isRequiredForChat = Boolean(pendingChatId);
 
   const handleInputChange = (field: keyof PersonaFormData, value: string | number | undefined) => {
     setFormData(prev => ({
@@ -56,7 +60,17 @@ const PersonaCreation: React.FC = () => {
       console.log('✅ Persona created successfully:', newPersona);
       
       alert('페르소나가 성공적으로 생성되었습니다!');
-      navigate('/tabs/my');
+      
+      // 대기 중인 채팅방 ID가 있는지 확인
+      if (pendingChatId) {
+        // 저장된 채팅방 ID 제거
+        localStorage.removeItem('pendingChatId');
+        // 해당 채팅방으로 이동
+        navigate(`/chat/${pendingChatId}`);
+      } else {
+        // 일반적인 경우는 MY 탭으로 이동
+        navigate('/tabs/my');
+      }
     } catch (error) {
       console.error('❌ Persona creation failed:', error);
       alert('페르소나 생성에 실패했습니다. 다시 시도해주세요.');
@@ -84,6 +98,21 @@ const PersonaCreation: React.FC = () => {
           {isLoading ? '완료중...' : '완료'}
         </button>
       </div>
+
+      {/* 채팅을 위한 페르소나 생성 안내 */}
+      {isRequiredForChat && (
+        <div className="bg-mingle-rose text-silky-white p-4 mx-4 mt-4 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <span className="text-lg">💬</span>
+            <div>
+              <p className="font-medium">채팅을 시작하려면 페르소나가 필요해요!</p>
+              <p className="text-sm opacity-90 mt-1">
+                AI 캐릭터와 대화할 때 사용할 나만의 페르소나를 만들어주세요.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="p-4 space-y-6">
         {/* 프로필 이미지 */}

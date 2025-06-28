@@ -3,10 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { characterAPI, userAPI } from '../../lib/api';
 
+interface Character {
+  id: number;
+  name: string;
+  avatar: string;
+  description: string;
+  personality: string;
+}
+
 const My: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const [myCharacters, setMyCharacters] = useState<any[]>([]);
+  const [myCharacters, setMyCharacters] = useState<Character[]>([]);
   const [userStats, setUserStats] = useState({
     gems: 1250,
     level: 5,
@@ -21,16 +29,20 @@ const My: React.FC = () => {
 
   const loadMyCharacters = async () => {
     try {
-      const characters = await characterAPI.getAllCharacters({ user_id: 1 }); // 임시로 user_id 1 사용
-      setMyCharacters(characters);
+      const response = await characterAPI.getAllCharacters({ user_id: 1 }); // 임시로 user_id 1 사용
+      // API 응답이 배열인지 확인하고 처리
+      if (Array.isArray(response)) {
+        setMyCharacters(response);
+      } else if (response && Array.isArray(response.characters)) {
+        setMyCharacters(response.characters);
+      } else {
+        console.warn('Characters API returned unexpected format:', response);
+        setMyCharacters([]);
+      }
     } catch (error) {
       console.error('Failed to load characters:', error);
-      // Mock data for demo
-      setMyCharacters([
-        { id: 1, name: '애니', avatar: '🤖', description: '친근한 AI 친구', personality: '활발함' },
-        { id: 2, name: '루나', avatar: '🌙', description: '신비로운 밤의 친구', personality: '신비로움' },
-        { id: 3, name: '레오', avatar: '🦁', description: '용감한 모험가', personality: '대담함' },
-      ]);
+      // 에러 발생 시 빈 배열로 초기화
+      setMyCharacters([]);
     }
   };
 
@@ -52,14 +64,14 @@ const My: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-silky-white pb-20 safe-top">
       {/* Header */}
-      <div className="bg-white px-4 py-6 border-b border-gray-200">
+      <div className="bg-white px-4 py-6 border-b border-gray-200 safe-top">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900">MY</h1>
           <button 
             onClick={handleLogout}
-            className="text-gray-500 hover:text-gray-700 p-2"
+            className="text-gray-500 hover:text-gray-700 active:text-gray-900 p-2 touch-target"
           >
             ⚙️
           </button>
@@ -68,9 +80,9 @@ const My: React.FC = () => {
 
       {/* User Profile */}
       <div className="px-4 py-6">
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="card p-6">
           <div className="flex items-center space-x-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-2xl text-white font-bold">
+            <div className="w-16 h-16 bg-gradient-to-br from-mingle-rose to-twilight-blue rounded-full flex items-center justify-center text-2xl text-silky-white font-bold">
               {user?.displayName?.charAt(0) || '👤'}
             </div>
             <div className="flex-1">
@@ -79,7 +91,7 @@ const My: React.FC = () => {
               </h2>
               <p className="text-gray-600 text-sm">{user?.email}</p>
               <div className="flex items-center space-x-4 mt-2">
-                <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-medium">
+                <span className="bg-mint-mix text-night-ink px-2 py-1 rounded-full text-xs font-medium">
                   Lv.{userStats.level}
                 </span>
                 <span className="text-gray-500 text-xs">
@@ -100,7 +112,7 @@ const My: React.FC = () => {
               <p className="text-2xl font-bold">{userStats.gems.toLocaleString()} 💎</p>
               <p className="text-yellow-100 text-sm mt-1">AI 친구 생성에 사용하세요</p>
             </div>
-            <button className="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <button className="bg-white bg-opacity-20 hover:bg-opacity-30 active:bg-opacity-40 px-4 py-2 rounded-lg text-sm font-medium transition-colors touch-target">
               충전하기
             </button>
           </div>
@@ -110,17 +122,17 @@ const My: React.FC = () => {
       {/* Quick Stats */}
       <div className="px-4 mb-6">
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-white rounded-xl p-4 text-center shadow-sm border border-gray-100">
+          <div className="card p-4 text-center">
             <div className="text-2xl mb-2">👥</div>
             <p className="text-gray-600 text-xs mb-1">친구</p>
             <p className="font-bold text-gray-900">{userStats.friendsCount}</p>
           </div>
-          <div className="bg-white rounded-xl p-4 text-center shadow-sm border border-gray-100">
+          <div className="card p-4 text-center">
             <div className="text-2xl mb-2">💬</div>
             <p className="text-gray-600 text-xs mb-1">대화</p>
             <p className="font-bold text-gray-900">{userStats.totalChats}</p>
           </div>
-          <div className="bg-white rounded-xl p-4 text-center shadow-sm border border-gray-100">
+          <div className="card p-4 text-center">
             <div className="text-2xl mb-2">🏆</div>
             <p className="text-gray-600 text-xs mb-1">레벨</p>
             <p className="font-bold text-gray-900">{userStats.level}</p>
@@ -134,7 +146,7 @@ const My: React.FC = () => {
           <h2 className="text-lg font-semibold text-gray-900">내 페르소나</h2>
           <button 
             onClick={() => navigate('/persona/create')}
-            className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="bg-mingle-rose hover:bg-twilight-blue active:bg-twilight-blue text-silky-white px-4 py-2 rounded-lg text-sm font-medium transition-colors touch-target"
           >
             + 추가
           </button>
@@ -142,16 +154,16 @@ const My: React.FC = () => {
 
         <div className="grid grid-cols-2 gap-3">
           {/* Default Persona */}
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <div className="card p-4">
             <div className="text-center">
               <div className="text-3xl mb-3">👤</div>
               <h3 className="font-medium text-gray-900 mb-1">나</h3>
               <p className="text-xs text-gray-600 mb-2">기본 페르소나</p>
-              <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs">
+              <span className="bg-twilight-blue text-silky-white px-2 py-1 rounded-full text-xs">
                 기본
               </span>
               <div className="flex space-x-2 mt-3">
-                <button className="flex-1 bg-blue-100 text-blue-700 py-2 px-3 rounded-lg text-xs font-medium hover:bg-blue-200 transition-colors">
+                <button className="flex-1 bg-mint-mix text-night-ink py-2 px-3 rounded-lg text-xs font-medium hover:bg-twilight-blue hover:text-silky-white active:bg-twilight-blue active:text-silky-white transition-colors touch-target">
                   설정
                 </button>
               </div>
@@ -161,7 +173,7 @@ const My: React.FC = () => {
           {/* Add Persona Card */}
           <div 
             onClick={() => navigate('/persona/create')}
-            className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer border-dashed border-2"
+            className="card p-4 hover:shadow-lg cursor-pointer border-dashed border-2 touch-target"
           >
             <div className="text-center h-full flex flex-col justify-center">
               <div className="text-3xl mb-3 text-gray-400">➕</div>
@@ -173,22 +185,22 @@ const My: React.FC = () => {
       </div>
 
       {/* My Characters */}
-      <div className="px-4">
+      <div className="px-4 mb-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">내 캐릭터</h2>
           <button 
             onClick={() => navigate('/character/create')}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="btn-primary text-sm px-4 py-2 touch-target"
           >
             + 추가
           </button>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          {myCharacters.map((character) => (
+          {Array.isArray(myCharacters) && myCharacters.map((character) => (
             <div
               key={character.id}
-              className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+              className="card p-4 hover:shadow-lg transition-shadow"
             >
               <div className="text-center">
                 <div className="text-3xl mb-3">{character.avatar}</div>
@@ -198,10 +210,10 @@ const My: React.FC = () => {
                   {character.personality}
                 </span>
                 <div className="flex space-x-2 mt-3">
-                  <button className="flex-1 bg-purple-100 text-purple-700 py-2 px-3 rounded-lg text-xs font-medium hover:bg-purple-200 transition-colors">
+                  <button className="flex-1 bg-mint-mix text-night-ink py-2 px-3 rounded-lg text-xs font-medium hover:bg-twilight-blue hover:text-silky-white active:bg-twilight-blue active:text-silky-white transition-colors touch-target">
                     채팅
                   </button>
-                  <button className="bg-gray-100 text-gray-700 p-2 rounded-lg hover:bg-gray-200 transition-colors">
+                  <button className="bg-gray-100 text-gray-700 p-2 rounded-lg hover:bg-gray-200 active:bg-gray-300 transition-colors touch-target">
                     ⚙️
                   </button>
                 </div>
@@ -212,7 +224,7 @@ const My: React.FC = () => {
           {/* Add Character Card */}
           <div 
             onClick={() => navigate('/character/create')}
-            className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer border-dashed border-2"
+            className="card p-4 hover:shadow-lg cursor-pointer border-dashed border-2 touch-target"
           >
             <div className="text-center h-full flex flex-col justify-center">
               <div className="text-3xl mb-3 text-gray-400">➕</div>
@@ -224,10 +236,10 @@ const My: React.FC = () => {
       </div>
 
       {/* Settings Menu */}
-      <div className="px-4 mt-8 mb-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+      <div className="px-4 mb-6">
+        <div className="card">
           <div className="divide-y divide-gray-100">
-            <button className="w-full flex items-center justify-between px-4 py-4 hover:bg-gray-50 transition-colors">
+            <button className="w-full flex items-center justify-between px-4 py-4 hover:bg-gray-50 active:bg-gray-100 transition-colors touch-target">
               <div className="flex items-center space-x-3">
                 <span className="text-lg">🔔</span>
                 <span className="text-gray-900 font-medium">알림 설정</span>
@@ -235,15 +247,18 @@ const My: React.FC = () => {
               <span className="text-gray-400">›</span>
             </button>
             
-            <button className="w-full flex items-center justify-between px-4 py-4 hover:bg-gray-50 transition-colors">
+            <button 
+              onClick={() => navigate('/styleguide')}
+              className="w-full flex items-center justify-between px-4 py-4 hover:bg-gray-50 active:bg-gray-100 transition-colors touch-target"
+            >
               <div className="flex items-center space-x-3">
                 <span className="text-lg">🎨</span>
-                <span className="text-gray-900 font-medium">테마 설정</span>
+                <span className="text-gray-900 font-medium">스타일 가이드</span>
               </div>
               <span className="text-gray-400">›</span>
             </button>
             
-            <button className="w-full flex items-center justify-between px-4 py-4 hover:bg-gray-50 transition-colors">
+            <button className="w-full flex items-center justify-between px-4 py-4 hover:bg-gray-50 active:bg-gray-100 transition-colors touch-target">
               <div className="flex items-center space-x-3">
                 <span className="text-lg">❓</span>
                 <span className="text-gray-900 font-medium">도움말</span>
@@ -253,7 +268,7 @@ const My: React.FC = () => {
             
             <button 
               onClick={handleLogout}
-              className="w-full flex items-center justify-between px-4 py-4 hover:bg-gray-50 transition-colors text-red-600"
+              className="w-full flex items-center justify-between px-4 py-4 hover:bg-gray-50 active:bg-gray-100 transition-colors text-red-600 touch-target"
             >
               <div className="flex items-center space-x-3">
                 <span className="text-lg">🚪</span>

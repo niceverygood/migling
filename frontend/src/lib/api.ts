@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3003';
+const API_BASE_URL = 'http://localhost:3003'; // 개발 환경에서 직접 설정
 
 // Create axios instance
 export const api = axios.create({
@@ -53,7 +53,15 @@ api.interceptors.response.use(
       removeAuthToken();
       window.location.href = '/login';
     }
-    console.error('API Error:', error.response?.data || error.message);
+    console.error('API Error Details:', {
+      url: error.config?.url,
+      method: error.config?.method,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message,
+      code: error.code
+    });
     return Promise.reject(error);
   }
 );
@@ -200,4 +208,25 @@ export const chatAPI = {
     const { data } = await api.get(`/chat/rooms/${roomId}/messages`);
     return data;
   },
+};
+
+export const uploadAPI = {
+  // Upload avatar image
+  uploadAvatar: async (file: File) => {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    
+    const { data } = await api.post('/api/upload/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return data;
+  },
+
+  // Delete avatar image
+  deleteAvatar: async (filename: string) => {
+    const { data } = await api.delete(`/api/upload/avatar/${filename}`);
+    return data;
+  }
 }; 

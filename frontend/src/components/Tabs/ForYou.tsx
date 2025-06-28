@@ -1,157 +1,350 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { characterAPI, personaAPI } from '../../lib/api';
+
+interface Character {
+  id: number;
+  name: string;
+  description: string;
+  avatar_url?: string;
+  category: string;
+  gender: string;
+  age: number;
+  occupation: string;
+  one_liner: string;
+}
+
+interface Persona {
+  id: number;
+  name: string;
+  description: string;
+  is_default: boolean;
+}
 
 const ForYou: React.FC = () => {
-  const recommendations = [
-    {
-      id: 1,
-      type: 'character',
-      title: '새로운 AI 친구 "스텔라" ✨',
-      description: '감정을 이해하고 공감해주는 따뜻한 AI 친구입니다.',
-      image: '🌟',
-      category: 'AI 캐릭터',
-    },
-    {
-      id: 2,
-      type: 'trend',
-      title: '오늘의 인기 대화 주제 🔥',
-      description: '많은 사람들이 이야기하고 있는 재미있는 주제들을 확인해보세요.',
-      image: '📈',
-      category: '트렌드',
-    },
-    {
-      id: 3,
-      type: 'tip',
-      title: 'AI와 더 재미있게 대화하는 방법 💡',
-      description: 'AI 친구와의 대화를 더욱 흥미롭게 만드는 팁들을 알아보세요.',
-      image: '💭',
-      category: '팁',
-    },
-    {
-      id: 4,
-      type: 'character',
-      title: '모험가 "아르테미스" 🏹',
-      description: '함께 상상의 모험을 떠날 수 있는 용감한 AI 친구입니다.',
-      image: '🏹',
-      category: 'AI 캐릭터',
-    },
-  ];
+  const navigate = useNavigate();
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [personas, setPersonas] = useState<Persona[]>([]);
+  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
+  const [showPersonaModal, setShowPersonaModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const categories = ['전체', 'AI 캐릭터', '트렌드', '팁', '이벤트'];
-  const [selectedCategory, setSelectedCategory] = React.useState('전체');
+  // 캐릭터 데이터 로딩
+  useEffect(() => {
+    const loadCharacters = async () => {
+      try {
+        setIsLoading(true);
+        // For You 탭에서는 공개 캐릭터만 가져오기
+        const response = await characterAPI.getAllCharacters({
+          is_private: false
+        });
+        console.log('📄 For You characters response:', response);
+        
+        const charactersData = Array.isArray(response) ? response : response.characters || [];
+        console.log('📄 For You characters data:', charactersData);
+        
+        setCharacters(charactersData);
+        
+        if (charactersData.length === 0) {
+          console.log('❌ No public characters found');
+        }
+      } catch (error) {
+        console.error('Failed to load characters:', error);
+        // 네트워크 에러 시 빈 배열로 설정
+        setCharacters([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const filteredRecommendations = selectedCategory === '전체' 
-    ? recommendations 
-    : recommendations.filter(item => item.category === selectedCategory);
+    loadCharacters();
+  }, []);
+
+  // 페르소나 데이터 로딩
+  const loadPersonas = async () => {
+    try {
+      const response = await personaAPI.getAllPersonas();
+      const personasData = Array.isArray(response) ? response : response.personas || [];
+      setPersonas(personasData);
+    } catch (error) {
+      console.error('Failed to load personas:', error);
+    }
+  };
+
+  // 다음 카드로 이동
+  const nextCard = () => {
+    if (currentCardIndex < characters.length - 1) {
+      setCurrentCardIndex(currentCardIndex + 1);
+    }
+  };
+
+  // 이전 카드로 이동
+  const prevCard = () => {
+    if (currentCardIndex > 0) {
+      setCurrentCardIndex(currentCardIndex - 1);
+    }
+  };
+
+  // 채팅 시작 버튼 클릭
+  const handleChatStart = async (character: Character) => {
+    setSelectedCharacter(character);
+    await loadPersonas();
+    setShowPersonaModal(true);
+  };
+
+  // 페르소나 선택
+  const handlePersonaSelect = (persona: Persona) => {
+    if (selectedCharacter) {
+      // 선택된 페르소나 정보를 저장
+      localStorage.setItem('selectedPersonaId', persona.id.toString());
+      setShowPersonaModal(false);
+      navigate(`/chat/${selectedCharacter.id}`);
+    }
+  };
+
+  // 페르소나 생성하기
+  const handleCreatePersona = () => {
+    if (selectedCharacter) {
+      localStorage.setItem('pendingChatId', selectedCharacter.id.toString());
+      setShowPersonaModal(false);
+      navigate('/persona/create');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-silky-white mobile-container">
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mingle-rose mx-auto mb-4"></div>
+            <p className="text-night-ink">캐릭터를 불러오는 중...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const currentCharacter = characters[currentCardIndex];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-silky-white pb-20 safe-top mobile-container">
       {/* Header */}
-      <div className="bg-white px-4 py-6 border-b border-gray-200">
-        <h1 className="text-2xl font-bold text-gray-900">For You</h1>
-        <p className="text-gray-600 text-sm mt-1">당신을 위한 특별한 추천 콘텐츠</p>
-      </div>
-
-      {/* Category Filter */}
-      <div className="px-4 py-4">
-        <div className="flex space-x-2 overflow-x-auto pb-2">
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                selectedCategory === category
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-              }`}
-            >
-              {category}
-            </button>
-          ))}
+      <div className="bg-white px-4 py-6 border-b border-gray-200 safe-top">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">For You</h1>
+            <p className="text-gray-600 text-sm mt-1">새로운 AI 친구들을 만나보세요</p>
+          </div>
+          <div className="text-sm text-gray-500">
+            {currentCardIndex + 1} / {characters.length}
+          </div>
         </div>
       </div>
 
-      {/* Featured Banner */}
-      <div className="px-4 mb-6">
-        <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold mb-2">🎉 특별 이벤트</h2>
-              <p className="text-purple-100 text-sm">
-                새로운 AI 친구들과 만나면<br />특별한 보상을 받아보세요!
-              </p>
-              <button className="mt-4 bg-white text-purple-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
-                참여하기
+      {/* Character Cards */}
+      <div className="flex-1 flex items-center justify-center p-4">
+        {characters.length === 0 ? (
+          <div className="text-center">
+            <div className="text-6xl mb-4">🔍</div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">공개 캐릭터가 없어요</h3>
+            <p className="text-gray-600 text-sm mb-6">
+              아직 다른 사용자들이 만든 공개 캐릭터가 없습니다.<br/>
+              직접 캐릭터를 만들어보세요!
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  setIsLoading(true);
+                  window.location.reload();
+                }}
+                className="w-full bg-twilight-blue text-silky-white py-3 px-6 rounded-xl font-medium hover:bg-opacity-90 transition-colors touch-target"
+              >
+                🔄 새로고침
+              </button>
+              <button
+                onClick={() => navigate('/character/create')}
+                className="w-full bg-mingle-rose text-silky-white py-3 px-6 rounded-xl font-medium hover:bg-opacity-90 transition-colors touch-target"
+              >
+                ✨ 내 캐릭터 만들기
               </button>
             </div>
-            <div className="text-4xl">🎁</div>
           </div>
-        </div>
-      </div>
-
-      {/* Recommendations */}
-      <div className="px-4">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">추천 콘텐츠</h2>
-        <div className="space-y-4">
-          {filteredRecommendations.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
-            >
-              <div className="flex items-start space-x-4">
-                <div className="text-4xl flex-shrink-0">{item.image}</div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-medium">
-                      {item.category}
-                    </span>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">{item.title}</h3>
-                  <p className="text-gray-600 text-sm mb-3">{item.description}</p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex space-x-4 text-xs text-gray-500">
-                      <span>❤️ 123</span>
-                      <span>💬 45</span>
-                      <span>📤 12</span>
+        ) : currentCharacter ? (
+          <div className="w-full max-w-sm">
+            {/* Character Card */}
+            <div className="card p-6 bg-white shadow-xl relative">
+              {/* Character Avatar */}
+              <div className="text-center mb-6">
+                <div className="w-24 h-24 rounded-full mx-auto mb-4 overflow-hidden border-4 border-mingle-rose border-opacity-20">
+                  {currentCharacter.avatar_url ? (
+                    <img 
+                      src={currentCharacter.avatar_url.startsWith('http') 
+                        ? currentCharacter.avatar_url 
+                        : `http://localhost:3003${currentCharacter.avatar_url}`
+                      }
+                      alt={`${currentCharacter.name} 프로필`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // 이미지 로드 실패 시 기본 아바타로 대체
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          parent.innerHTML = `
+                            <div class="w-full h-full bg-gradient-to-br from-mingle-rose to-twilight-blue flex items-center justify-center text-silky-white font-bold text-2xl">
+                              ${currentCharacter.name[0]}
+                            </div>
+                          `;
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-mingle-rose to-twilight-blue flex items-center justify-center text-silky-white font-bold text-2xl">
+                      {currentCharacter.name[0]}
                     </div>
-                    <button className="text-purple-600 text-sm font-medium hover:text-purple-700">
-                      자세히 보기
-                    </button>
-                  </div>
+                  )}
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">{currentCharacter.name}</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  {currentCharacter.age}세 • {currentCharacter.occupation}
+                </p>
+              </div>
+
+              {/* Character Info */}
+              <div className="space-y-4 mb-6">
+                <div>
+                  <h3 className="font-medium text-gray-900 mb-2">한 마디</h3>
+                  <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">
+                    "{currentCharacter.one_liner}"
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="font-medium text-gray-900 mb-2">소개</h3>
+                  <p className="text-sm text-gray-700">{currentCharacter.description}</p>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <span className="bg-mint-mix text-night-ink px-3 py-1 rounded-full text-xs font-medium">
+                    {currentCharacter.category}
+                  </span>
+                  <span className="bg-twilight-blue text-silky-white px-3 py-1 rounded-full text-xs font-medium">
+                    {currentCharacter.gender === 'male' ? '남성' : currentCharacter.gender === 'female' ? '여성' : '미지정'}
+                  </span>
                 </div>
               </div>
+
+              {/* Chat Button */}
+              <button
+                onClick={() => handleChatStart(currentCharacter)}
+                className="w-full bg-mingle-rose hover:bg-twilight-blue active:bg-twilight-blue text-silky-white py-4 rounded-xl font-medium text-lg transition-colors touch-target"
+              >
+                💬 채팅하기
+              </button>
             </div>
-          ))}
-        </div>
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between items-center mt-6">
+              <button
+                onClick={prevCard}
+                disabled={currentCardIndex === 0}
+                className="p-3 bg-white rounded-full shadow-md hover:shadow-lg active:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-shadow touch-target"
+              >
+                <span className="text-xl">←</span>
+              </button>
+              
+              <div className="flex space-x-2">
+                {characters.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-2 h-2 rounded-full transition-colors ${
+                      index === currentCardIndex ? 'bg-mingle-rose' : 'bg-gray-300'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <button
+                onClick={nextCard}
+                disabled={currentCardIndex === characters.length - 1}
+                className="p-3 bg-white rounded-full shadow-md hover:shadow-lg active:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-shadow touch-target"
+              >
+                <span className="text-xl">→</span>
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
 
-      {/* Daily Challenge */}
-      <div className="px-4 mt-8 mb-6">
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <div className="text-center">
-            <div className="text-4xl mb-3">🎯</div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">오늘의 챌린지</h3>
-            <p className="text-gray-600 text-sm mb-4">
-              AI 친구와 5분 이상 대화하기
-            </p>
-            <div className="bg-gray-200 rounded-full h-2 mb-4">
-              <div className="bg-purple-600 h-2 rounded-full w-3/4"></div>
+      {/* Persona Selection Modal */}
+      {showPersonaModal && selectedCharacter && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+            <div className="text-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">채팅 프로필</h3>
+              <p className="text-sm text-gray-600 mt-1">
+                {selectedCharacter.name}과 대화할 페르소나를 선택해주세요
+              </p>
             </div>
-            <p className="text-xs text-gray-500 mb-4">75% 완료 (3분 30초 / 5분)</p>
-            <button className="bg-purple-100 text-purple-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-200 transition-colors">
-              계속하기
+
+            {personas.length === 0 ? (
+              <div className="text-center py-6">
+                <div className="text-4xl mb-3">👤</div>
+                <p className="text-gray-600 text-sm mb-4">
+                  아직 페르소나가 없어요.<br />
+                  새로운 페르소나를 만들어주세요!
+                </p>
+                <button
+                  onClick={handleCreatePersona}
+                  className="w-full bg-mingle-rose text-silky-white py-3 rounded-lg font-medium transition-colors touch-target"
+                >
+                  페르소나 만들기
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3 mb-4">
+                {personas.map(persona => (
+                  <button
+                    key={persona.id}
+                    onClick={() => handlePersonaSelect(persona)}
+                    className="w-full p-3 border border-gray-200 rounded-lg hover:border-mingle-rose active:border-mingle-rose hover:bg-gray-50 active:bg-gray-50 transition-colors text-left touch-target"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium text-gray-900">{persona.name}</h4>
+                        {persona.description && (
+                          <p className="text-sm text-gray-600 mt-1">{persona.description}</p>
+                        )}
+                      </div>
+                      {persona.is_default && (
+                        <span className="bg-twilight-blue text-silky-white px-2 py-1 rounded-full text-xs">
+                          기본
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                ))}
+                
+                <button
+                  onClick={handleCreatePersona}
+                  className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-mingle-rose active:border-mingle-rose text-gray-600 hover:text-mingle-rose active:text-mingle-rose transition-colors touch-target"
+                >
+                  <div className="text-center">
+                    <span className="text-xl">➕</span>
+                    <p className="text-sm font-medium mt-1">새 페르소나 만들기</p>
+                  </div>
+                </button>
+              </div>
+            )}
+
+            <button
+              onClick={() => setShowPersonaModal(false)}
+              className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-200 active:bg-gray-200 transition-colors touch-target"
+            >
+              취소
             </button>
           </div>
-        </div>
-      </div>
-
-      {/* Empty State */}
-      {filteredRecommendations.length === 0 && (
-        <div className="flex flex-col items-center justify-center h-64">
-          <div className="text-6xl mb-4">🔍</div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">추천 콘텐츠가 없어요</h3>
-          <p className="text-gray-600 text-center text-sm">
-            다른 카테고리를 선택해보세요
-          </p>
         </div>
       )}
     </div>

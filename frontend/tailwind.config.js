@@ -7,6 +7,15 @@ export default {
   theme: {
     extend: {
       colors: {
+        // MINGLE_COLORS - 새로운 브랜드 컬러 팔레트
+        "mingle-rose": "#F7BFD4",    // 메인 포인트‧프라이머리 버튼
+        "mint-mix": "#C6EEE7",       // 서브 포인트‧태그‧사용자 말풍선
+        "twilight-blue": "#95B8F1",  // hover/active 상태‧링크 강조
+        "peach-mingle": "#FFD6B9",   // 캐릭터 말풍선‧하이라이트 배경
+        "silky-white": "#FAFAFA",    // 앱 기본 배경
+        "night-ink": "#333333",      // 기본 텍스트
+        
+        // 기존 시스템 컬러 (호환성을 위해 유지)
         primary: {
           50: '#faf5ff',
           100: '#f3e8ff',
@@ -103,9 +112,9 @@ export default {
         '128': '32rem',
       },
       borderRadius: {
-        'xl': '0.75rem',
-        '2xl': '1rem',
-        '3xl': '1.5rem',
+        'xl': '1rem',      // 기본 border-radius를 1rem으로 통일
+        '2xl': '1.5rem',
+        '3xl': '2rem',
       },
       boxShadow: {
         'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',

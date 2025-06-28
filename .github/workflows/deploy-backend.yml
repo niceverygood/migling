@@ -1,0 +1,93 @@
+name: Deploy Backend to EC2
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+    
+    - name: Install dependencies and build
+      run: |
+        cd backend
+        npm ci
+        npm run build
+    
+    - name: Create deployment package
+      run: |
+        cd backend
+        mkdir -p deploy
+        cp -r build deploy/
+        cp -r node_modules deploy/
+        cp package*.json deploy/
+        cp -r migrations deploy/
+        cp -r scripts deploy/
+        tar -czf deploy.tar.gz -C deploy .
+    
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_PRIVATE_KEY }}
+        port: 22
+        script: |
+          # Navigate to project directory
+          cd ~/mingling/backend
+          
+          # Stop current application
+          pm2 stop mingling-backend || true
+          
+          # Backup current version
+          if [ -d "current" ]; then
+            rm -rf backup
+            mv current backup
+          fi
+          
+          # Create new deployment directory
+          mkdir -p current
+          
+          # Download and extract new version
+          cd current
+          
+          # Here you would typically download the deployment package
+          # For now, we'll pull from git and build
+          cd ~/mingling
+          git pull origin main
+          
+          cd backend
+          npm ci --production=false
+          npm run build
+          
+          # Run migrations
+          npm run migrate
+          
+          # Start application with PM2
+          pm2 start build/index.js --name mingling-backend || pm2 restart mingling-backend
+          
+          # Save PM2 configuration
+          pm2 save
+          
+          # Show status
+          pm2 status
+    
+    - name: Health Check
+      run: |
+        sleep 10
+        curl -f ${{ secrets.EC2_HEALTH_CHECK_URL }}/api/health || exit 1 

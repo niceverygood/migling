@@ -355,4 +355,46 @@ router.get('/:id/history/:personaId', async (req, res) => {
   }
 });
 
+// GET /api/characters/:id - 개별 캐릭터 조회 (가장 마지막에 배치)
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).json({ error: 'Valid character ID required' });
+    }
+    
+    const [rows] = await pool.execute(
+      `SELECT id, name, description, personality, avatar_url, category, gender, 
+       age, occupation, one_liner, background_info, habits, hashtags, 
+       first_scene_setting, chat_ending, is_private, created_at 
+       FROM characters 
+       WHERE id = ? AND is_active = 1`,
+      [parseInt(id)]
+    );
+    
+    const characters = rows as any[];
+    
+    if (characters.length === 0) {
+      return res.status(404).json({ error: 'Character not found' });
+    }
+    
+    const character = characters[0];
+    
+    // hashtags 파싱
+    if (character.hashtags && typeof character.hashtags === 'string') {
+      try {
+        character.hashtags = JSON.parse(character.hashtags);
+      } catch (error) {
+        character.hashtags = [];
+      }
+    }
+    
+    res.json(character);
+  } catch (error) {
+    console.error('Get character error:', error);
+    res.status(500).json({ error: 'Failed to get character' });
+  }
+});
+
 export default router; 

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { characterAPI } from '../lib/api';
+import { useState, useRef } from 'react';
+import { characterAPI, uploadAPI } from '../lib/api';
 import { useNavigate } from 'react-router-dom';
 
 interface CharacterFormData {
@@ -64,8 +64,12 @@ const HASHTAGS = [
 
 export default function CharacterCreation() {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [hashtagInput, setHashtagInput] = useState('');
   const [formData, setFormData] = useState<CharacterFormData>({
     name: '',
     age: '',
@@ -87,6 +91,61 @@ export default function CharacterCreation() {
 
   const updateFormData = (updates: Partial<CharacterFormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
+  };
+
+  // 이미지 파일 선택 처리
+  const handleImageSelect = () => {
+    fileInputRef.current?.click();
+  };
+
+  // 이미지 업로드 처리
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // 파일 크기 체크 (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('파일 크기는 5MB 이하여야 합니다.');
+      return;
+    }
+
+    // 파일 타입 체크
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 업로드 가능합니다.');
+      return;
+    }
+
+    try {
+      setIsUploadingImage(true);
+
+      // 미리보기 이미지 설정
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreviewImage(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+
+      // 서버에 업로드
+      const uploadResult = await uploadAPI.uploadAvatar(file);
+      updateFormData({ avatar_url: uploadResult.url });
+
+      console.log('✅ Image uploaded:', uploadResult);
+    } catch (error) {
+      console.error('Image upload failed:', error);
+      alert('이미지 업로드에 실패했습니다. 다시 시도해주세요.');
+      setPreviewImage(null);
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  // 이미지 제거
+  const handleImageRemove = () => {
+    setPreviewImage(null);
+    updateFormData({ avatar_url: '' });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleSubmit = async () => {
@@ -118,15 +177,120 @@ export default function CharacterCreation() {
     });
   };
 
+  // 해시태그 직접 추가 함수
+  const addCustomHashtag = () => {
+    const trimmedInput = hashtagInput.trim();
+    if (!trimmedInput) return;
+    
+    // # 제거 (사용자가 실수로 입력한 경우)
+    const cleanHashtag = trimmedInput.startsWith('#') ? trimmedInput.slice(1) : trimmedInput;
+    
+    // 빈 문자열 체크
+    if (!cleanHashtag) return;
+    
+    // 중복 체크 (대소문자 구분 없이)
+    if (formData.hashtags.some(tag => tag.toLowerCase() === cleanHashtag.toLowerCase())) {
+      alert('이미 추가된 해시태그입니다.');
+      return;
+    }
+    
+    // 길이 제한 (20자)
+    if (cleanHashtag.length > 20) {
+      alert('해시태그는 20자 이하로 입력해주세요.');
+      return;
+    }
+    
+    // 특수문자 체크 (한글, 영문, 숫자만 허용)
+    if (!/^[가-힣a-zA-Z0-9]+$/.test(cleanHashtag)) {
+      alert('해시태그는 한글, 영문, 숫자만 사용 가능합니다.');
+      return;
+    }
+    
+    // 개수 제한 (최대 10개)
+    if (formData.hashtags.length >= 10) {
+      alert('해시태그는 최대 10개까지 추가할 수 있습니다.');
+      return;
+    }
+    
+    updateFormData({
+      hashtags: [...formData.hashtags, cleanHashtag]
+    });
+    setHashtagInput('');
+  };
+
+  // 해시태그 제거 함수
+  const removeHashtag = (hashtagToRemove: string) => {
+    updateFormData({
+      hashtags: formData.hashtags.filter(tag => tag !== hashtagToRemove)
+    });
+  };
+
+  // 엔터키로 해시태그 추가
+  const handleHashtagKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addCustomHashtag();
+    }
+  };
+
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-xl font-bold text-gray-800 mb-2">프로필</h2>
-        <div className="w-24 h-24 bg-pink-100 rounded-full mx-auto mb-6 flex items-center justify-center">
-          <span className="text-2xl">👤</span>
+        
+        {/* 프로필 이미지 업로드 섹션 */}
+        <div className="relative mx-auto mb-6">
+          <div className="w-24 h-24 rounded-full mx-auto overflow-hidden bg-gray-100 border-2 border-dashed border-gray-300 hover:border-mingle-rose transition-colors">
+            {previewImage || formData.avatar_url ? (
+              <img 
+                src={previewImage || formData.avatar_url} 
+                alt="프로필 미리보기" 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                <span className="text-2xl">📷</span>
+              </div>
+            )}
+          </div>
+          
+          {/* 업로드/변경/제거 버튼 */}
+          <div className="flex justify-center mt-3 space-x-2">
+            <button
+              type="button"
+              onClick={handleImageSelect}
+              disabled={isUploadingImage}
+              className="px-3 py-1 text-sm bg-mingle-rose text-white rounded-lg hover:bg-opacity-80 disabled:opacity-50 transition-colors"
+            >
+              {isUploadingImage ? '업로드 중...' : (previewImage || formData.avatar_url) ? '사진 변경' : '사진 추가'}
+            </button>
+            {(previewImage || formData.avatar_url) && (
+              <button
+                type="button"
+                onClick={handleImageRemove}
+                className="px-3 py-1 text-sm bg-gray-500 text-white rounded-lg hover:bg-opacity-80 transition-colors"
+              >
+                제거
+              </button>
+            )}
+          </div>
+
+          {/* 숨겨진 파일 입력 */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            className="hidden"
+          />
         </div>
+
+        <p className="text-xs text-gray-500 mb-4">
+          JPG, PNG, GIF, WebP 파일 (최대 5MB)
+        </p>
       </div>
 
+      {/* 기존 입력 필드들 */}
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">이름</label>
@@ -135,7 +299,7 @@ export default function CharacterCreation() {
             value={formData.name}
             onChange={(e) => updateFormData({ name: e.target.value })}
             placeholder="이름을 입력해주세요"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-mingle-rose"
             maxLength={15}
           />
           <div className="text-right text-xs text-gray-500 mt-1">
@@ -150,7 +314,7 @@ export default function CharacterCreation() {
             value={formData.age}
             onChange={(e) => updateFormData({ age: e.target.value === '' ? '' : Number(e.target.value) })}
             placeholder="나이를 입력해주세요"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-mingle-rose"
             min="1"
             max="999"
           />
@@ -166,7 +330,7 @@ export default function CharacterCreation() {
             value={formData.occupation}
             onChange={(e) => updateFormData({ occupation: e.target.value })}
             placeholder="직업을 입력해주세요"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-mingle-rose"
           />
         </div>
 
@@ -176,7 +340,7 @@ export default function CharacterCreation() {
             value={formData.one_liner}
             onChange={(e) => updateFormData({ one_liner: e.target.value })}
             placeholder="대사를 입력해주세요"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500 h-20 resize-none"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-mingle-rose h-20 resize-none"
             maxLength={80}
           />
           <div className="text-right text-xs text-gray-500 mt-1">
@@ -287,31 +451,109 @@ export default function CharacterCreation() {
   const renderStep4 = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-xl font-bold text-gray-800 mb-2">해시태그 추가</h2>
-        <p className="text-sm text-gray-600 mb-6">선택된 태그</p>
-        <input
-          type="text"
-          placeholder="#없이 해시태그를 입력해주세요"
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500 mb-6"
-        />
+        <h2 className="text-xl font-bold text-night-ink mb-2">해시태그 추가</h2>
+        <p className="text-sm text-gray-600 mb-6">캐릭터의 특징을 나타내는 해시태그를 추가해주세요</p>
       </div>
 
-      <div>
-        <h3 className="text-lg font-medium text-gray-800 mb-3">해시태그 선택</h3>
+      {/* 커스텀 해시태그 입력 */}
+      <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+        <h3 className="text-lg font-semibold text-night-ink mb-3">직접 입력하기</h3>
+        <div className="flex space-x-2">
+          <div className="flex-1 relative">
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 font-medium">#</span>
+            <input
+              type="text"
+              value={hashtagInput}
+              onChange={(e) => setHashtagInput(e.target.value)}
+              onKeyPress={handleHashtagKeyPress}
+              placeholder="해시태그를 입력해주세요"
+              className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-mingle-rose focus:border-transparent transition-all"
+              maxLength={20}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={addCustomHashtag}
+            disabled={!hashtagInput.trim()}
+            className="px-6 py-3 bg-mingle-rose text-white rounded-xl font-medium hover:bg-opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all touch-target"
+          >
+            추가
+          </button>
+        </div>
+        <div className="text-right text-xs text-gray-500 mt-2">
+          {hashtagInput.length}/20 • 최대 10개
+        </div>
+      </div>
+
+      {/* 선택된 해시태그 목록 */}
+      {formData.hashtags.length > 0 && (
+        <div className="bg-mint-mix bg-opacity-20 rounded-2xl p-5 border border-mint-mix border-opacity-30">
+          <h3 className="text-lg font-semibold text-night-ink mb-3">
+            선택된 해시태그 ({formData.hashtags.length}/10)
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {formData.hashtags.map((hashtag, index) => (
+              <div
+                key={index}
+                className="inline-flex items-center bg-mint-mix text-night-ink px-3 py-2 rounded-full text-sm font-medium border border-mint-mix border-opacity-50"
+              >
+                <span>#{hashtag}</span>
+                <button
+                  type="button"
+                  onClick={() => removeHashtag(hashtag)}
+                  className="ml-2 text-gray-600 hover:text-red-500 transition-colors touch-target"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 추천 해시태그 */}
+      <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+        <h3 className="text-lg font-semibold text-night-ink mb-3">추천 해시태그</h3>
+        <p className="text-sm text-gray-600 mb-4">원하는 태그를 선택하거나 위에서 직접 입력하세요</p>
         <div className="flex flex-wrap gap-2">
-          {HASHTAGS.map((hashtag) => (
-            <button
-              key={hashtag}
-              onClick={() => toggleHashtag(hashtag)}
-              className={`px-3 py-1 rounded-full text-sm border transition-colors ${
-                formData.hashtags.includes(hashtag)
-                  ? 'bg-pink-500 text-white border-pink-500'
-                  : 'bg-white text-gray-700 border-gray-300 hover:border-pink-500'
-              }`}
-            >
-              {hashtag}
-            </button>
-          ))}
+          {HASHTAGS.map((hashtag) => {
+            const isSelected = formData.hashtags.includes(hashtag);
+            const isDisabled = !isSelected && formData.hashtags.length >= 10;
+            
+            return (
+              <button
+                key={hashtag}
+                type="button"
+                onClick={() => toggleHashtag(hashtag)}
+                disabled={isDisabled}
+                className={`px-4 py-2 rounded-full text-sm font-medium border transition-all touch-target ${
+                  isSelected
+                    ? 'bg-twilight-blue text-white border-twilight-blue'
+                    : isDisabled
+                    ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-twilight-blue hover:text-twilight-blue'
+                }`}
+              >
+                #{hashtag}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 도움말 */}
+      <div className="bg-peach-mingle bg-opacity-20 rounded-2xl p-4 border border-peach-mingle border-opacity-30">
+        <div className="flex items-start space-x-3">
+          <span className="text-lg">💡</span>
+          <div>
+            <h4 className="font-semibold text-night-ink mb-1">해시태그 입력 팁</h4>
+            <ul className="text-sm text-gray-600 space-y-1">
+              <li>• 한글, 영문, 숫자만 사용 가능해요</li>
+              <li>• 최대 20자, 10개까지 추가할 수 있어요</li>
+              <li>• 엔터키를 눌러서 빠르게 추가하세요</li>
+              <li>• 캐릭터의 성격, 취미, 특징을 표현해보세요</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>

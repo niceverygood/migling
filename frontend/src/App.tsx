@@ -9,6 +9,8 @@ import ForYou from './components/Tabs/ForYou';
 import My from './components/Tabs/My';
 import CharacterCreation from './components/CharacterCreation';
 import PersonaCreation from './components/PersonaCreation';
+import ChatRoom from './components/ChatRoom';
+import StyleGuide from './pages/StyleGuide';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -16,10 +18,12 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">로딩 중...</p>
+      <div className="mobile-container">
+        <div className="min-h-screen bg-silky-white flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mingle-rose mx-auto mb-4"></div>
+            <p className="text-night-ink">로딩 중...</p>
+          </div>
         </div>
       </div>
     );
@@ -38,10 +42,12 @@ const AppRoutes: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">로딩 중...</p>
+      <div className="mobile-container">
+        <div className="min-h-screen bg-silky-white flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mingle-rose mx-auto mb-4"></div>
+            <p className="text-night-ink">로딩 중...</p>
+          </div>
         </div>
       </div>
     );
@@ -49,33 +55,39 @@ const AppRoutes: React.FC = () => {
 
   if (!user) {
     return (
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
+      <div className="mobile-container">
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </div>
     );
   }
 
   return (
-    <Routes>
-      {/* 전체 화면 페이지들 (레이아웃 없음) */}
-      <Route path="/character/create" element={<ProtectedRoute><CharacterCreation /></ProtectedRoute>} />
-      <Route path="/persona/create" element={<ProtectedRoute><PersonaCreation /></ProtectedRoute>} />
-      
-      {/* 탭 레이아웃이 있는 페이지들 */}
-      <Route path="/*" element={
-        <Layout>
-          <Routes>
-            <Route path="/friends" element={<Friends />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/foryou" element={<ForYou />} />
-            <Route path="/my" element={<My />} />
-            <Route path="/" element={<Navigate to="/friends" replace />} />
-            <Route path="*" element={<Navigate to="/friends" replace />} />
-          </Routes>
-        </Layout>
-      } />
-    </Routes>
+    <div className="mobile-container">
+      <Routes>
+        {/* 전체 화면 페이지들 (레이아웃 없음) */}
+        <Route path="/character/create" element={<ProtectedRoute><CharacterCreation /></ProtectedRoute>} />
+        <Route path="/persona/create" element={<ProtectedRoute><PersonaCreation /></ProtectedRoute>} />
+        <Route path="/chat/:id" element={<ProtectedRoute><ChatRoom /></ProtectedRoute>} />
+        <Route path="/styleguide" element={<ProtectedRoute><StyleGuide /></ProtectedRoute>} />
+        
+        {/* 탭 레이아웃이 있는 페이지들 */}
+        <Route path="/*" element={
+          <Layout>
+            <Routes>
+              <Route path="/friends" element={<Friends />} />
+              <Route path="/chat" element={<Chat />} />
+              <Route path="/foryou" element={<ForYou />} />
+              <Route path="/my" element={<My />} />
+              <Route path="/" element={<Navigate to="/chat" replace />} />
+              <Route path="*" element={<Navigate to="/chat" replace />} />
+            </Routes>
+          </Layout>
+        } />
+      </Routes>
+    </div>
   );
 };
 
