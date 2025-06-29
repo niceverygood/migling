@@ -1,20 +1,40 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { characterAPI, userAPI } from '../../lib/api';
+import { characterAPI, userAPI, personaAPI } from '../../lib/api';
 
 interface Character {
   id: number;
   name: string;
-  avatar: string;
   description: string;
-  personality: string;
+  avatar_url?: string;
+  category: string;
+  gender: string;
+  age: number;
+  occupation: string;
+  one_liner: string;
+  is_private: boolean;
+}
+
+interface Persona {
+  id: number;
+  name: string;
+  description: string;
+  is_default: boolean;
+  age?: number;
+  occupation?: string;
+  gender?: string;
+  basic_info?: string;
+  habits?: string;
 }
 
 const My: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [myCharacters, setMyCharacters] = useState<Character[]>([]);
+  const [myPersonas, setMyPersonas] = useState<Persona[]>([]);
+  const [isLoadingCharacters, setIsLoadingCharacters] = useState(true);
+  const [isLoadingPersonas, setIsLoadingPersonas] = useState(true);
   const [userStats, setUserStats] = useState({
     gems: 1250,
     level: 5,
@@ -24,11 +44,13 @@ const My: React.FC = () => {
 
   useEffect(() => {
     loadMyCharacters();
+    loadMyPersonas();
     loadUserStats();
   }, []);
 
   const loadMyCharacters = async () => {
     try {
+      setIsLoadingCharacters(true);
       const response = await characterAPI.getAllCharacters({ user_id: 1 }); // 임시로 user_id 1 사용
       // API 응답이 배열인지 확인하고 처리
       if (Array.isArray(response)) {
@@ -43,6 +65,23 @@ const My: React.FC = () => {
       console.error('Failed to load characters:', error);
       // 에러 발생 시 빈 배열로 초기화
       setMyCharacters([]);
+    } finally {
+      setIsLoadingCharacters(false);
+    }
+  };
+
+  const loadMyPersonas = async () => {
+    try {
+      setIsLoadingPersonas(true);
+      const response = await personaAPI.getAllPersonas();
+      const personasData = Array.isArray(response) ? response : response.personas || [];
+      setMyPersonas(personasData);
+      console.log('📊 Loaded personas:', personasData);
+    } catch (error) {
+      console.error('Failed to load personas:', error);
+      setMyPersonas([]);
+    } finally {
+      setIsLoadingPersonas(false);
     }
   };
 
@@ -61,6 +100,15 @@ const My: React.FC = () => {
     } catch (error) {
       console.error('Logout failed:', error);
     }
+  };
+
+  const getCharacterAvatar = (character: Character) => {
+    if (character.avatar_url) {
+      return character.avatar_url.startsWith('http') 
+        ? character.avatar_url 
+        : `http://localhost:3003${character.avatar_url}`;
+    }
+    return null;
   };
 
   return (
@@ -124,13 +172,13 @@ const My: React.FC = () => {
         <div className="grid grid-cols-3 gap-3">
           <div className="card p-4 text-center">
             <div className="text-2xl mb-2">👥</div>
-            <p className="text-gray-600 text-xs mb-1">친구</p>
-            <p className="font-bold text-gray-900">{userStats.friendsCount}</p>
+            <p className="text-gray-600 text-xs mb-1">페르소나</p>
+            <p className="font-bold text-gray-900">{myPersonas.length}</p>
           </div>
           <div className="card p-4 text-center">
-            <div className="text-2xl mb-2">💬</div>
-            <p className="text-gray-600 text-xs mb-1">대화</p>
-            <p className="font-bold text-gray-900">{userStats.totalChats}</p>
+            <div className="text-2xl mb-2">🤖</div>
+            <p className="text-gray-600 text-xs mb-1">내 캐릭터</p>
+            <p className="font-bold text-gray-900">{myCharacters.length}</p>
           </div>
           <div className="card p-4 text-center">
             <div className="text-2xl mb-2">🏆</div>
@@ -152,36 +200,55 @@ const My: React.FC = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          {/* Default Persona */}
-          <div className="card p-4">
-            <div className="text-center">
-              <div className="text-3xl mb-3">👤</div>
-              <h3 className="font-medium text-gray-900 mb-1">나</h3>
-              <p className="text-xs text-gray-600 mb-2">기본 페르소나</p>
-              <span className="bg-twilight-blue text-silky-white px-2 py-1 rounded-full text-xs">
-                기본
-              </span>
-              <div className="flex space-x-2 mt-3">
-                <button className="flex-1 bg-mint-mix text-night-ink py-2 px-3 rounded-lg text-xs font-medium hover:bg-twilight-blue hover:text-silky-white active:bg-twilight-blue active:text-silky-white transition-colors touch-target">
-                  설정
-                </button>
+        {isLoadingPersonas ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mingle-rose"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {myPersonas.map((persona) => (
+              <div key={persona.id} className="card p-4">
+                <div className="text-center">
+                  <div className="text-3xl mb-3">
+                    {persona.gender === 'male' ? '👨' : persona.gender === 'female' ? '👩' : '👤'}
+                  </div>
+                  <h3 className="font-medium text-gray-900 mb-1">{persona.name}</h3>
+                  <p className="text-xs text-gray-600 mb-2">
+                    {persona.age && persona.occupation 
+                      ? `${persona.age}세 • ${persona.occupation}`
+                      : persona.description || '내 페르소나'
+                    }
+                  </p>
+                  {persona.is_default && (
+                    <span className="bg-twilight-blue text-silky-white px-2 py-1 rounded-full text-xs mb-3 inline-block">
+                      기본
+                    </span>
+                  )}
+                  <div className="flex space-x-2 mt-3">
+                    <button 
+                      onClick={() => navigate(`/persona/edit/${persona.id}`)}
+                      className="flex-1 bg-mint-mix text-night-ink py-2 px-3 rounded-lg text-xs font-medium hover:bg-twilight-blue hover:text-silky-white active:bg-twilight-blue active:text-silky-white transition-colors touch-target"
+                    >
+                      편집
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Add Persona Card */}
+            <div 
+              onClick={() => navigate('/persona/create')}
+              className="card p-4 hover:shadow-lg cursor-pointer border-dashed border-2 touch-target"
+            >
+              <div className="text-center h-full flex flex-col justify-center">
+                <div className="text-3xl mb-3 text-gray-400">➕</div>
+                <h3 className="font-medium text-gray-600 mb-1">새 페르소나</h3>
+                <p className="text-xs text-gray-500">나의 새로운 모습</p>
               </div>
             </div>
           </div>
-
-          {/* Add Persona Card */}
-          <div 
-            onClick={() => navigate('/persona/create')}
-            className="card p-4 hover:shadow-lg cursor-pointer border-dashed border-2 touch-target"
-          >
-            <div className="text-center h-full flex flex-col justify-center">
-              <div className="text-3xl mb-3 text-gray-400">➕</div>
-              <h3 className="font-medium text-gray-600 mb-1">새 페르소나</h3>
-              <p className="text-xs text-gray-500">나의 새로운 모습</p>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* My Characters */}
@@ -196,43 +263,88 @@ const My: React.FC = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          {Array.isArray(myCharacters) && myCharacters.map((character) => (
-            <div
-              key={character.id}
-              className="card p-4 hover:shadow-lg transition-shadow"
-            >
-              <div className="text-center">
-                <div className="text-3xl mb-3">{character.avatar}</div>
-                <h3 className="font-medium text-gray-900 mb-1">{character.name}</h3>
-                <p className="text-xs text-gray-600 mb-2">{character.description}</p>
-                <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">
-                  {character.personality}
-                </span>
-                <div className="flex space-x-2 mt-3">
-                  <button className="flex-1 bg-mint-mix text-night-ink py-2 px-3 rounded-lg text-xs font-medium hover:bg-twilight-blue hover:text-silky-white active:bg-twilight-blue active:text-silky-white transition-colors touch-target">
-                    채팅
-                  </button>
-                  <button className="bg-gray-100 text-gray-700 p-2 rounded-lg hover:bg-gray-200 active:bg-gray-300 transition-colors touch-target">
-                    ⚙️
-                  </button>
+        {isLoadingCharacters ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mingle-rose"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {Array.isArray(myCharacters) && myCharacters.map((character) => (
+              <div
+                key={character.id}
+                className="card p-4 hover:shadow-lg transition-shadow"
+              >
+                <div className="text-center">
+                  <div className="w-12 h-12 rounded-full mx-auto mb-3 overflow-hidden border-2 border-mingle-rose border-opacity-20">
+                    {getCharacterAvatar(character) ? (
+                      <img 
+                        src={getCharacterAvatar(character)!}
+                        alt={`${character.name} 프로필`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.innerHTML = `
+                              <div class="w-full h-full bg-gradient-to-br from-mingle-rose to-twilight-blue flex items-center justify-center text-silky-white font-bold text-lg">
+                                ${character.name[0]}
+                              </div>
+                            `;
+                          }
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-mingle-rose to-twilight-blue flex items-center justify-center text-silky-white font-bold text-lg">
+                        {character.name[0]}
+                      </div>
+                    )}
+                  </div>
+                  <h3 className="font-medium text-gray-900 mb-1">{character.name}</h3>
+                  <p className="text-xs text-gray-600 mb-2">
+                    {character.age}세 • {character.occupation}
+                  </p>
+                  <div className="flex items-center justify-center space-x-1 mb-3">
+                    <span className="bg-mint-mix text-night-ink px-2 py-1 rounded-full text-xs font-medium">
+                      {character.category}
+                    </span>
+                    {character.is_private && (
+                      <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">
+                        🔒
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex space-x-2 mt-3">
+                    <button 
+                      onClick={() => navigate(`/chat/${character.id}`)}
+                      className="flex-1 bg-mint-mix text-night-ink py-2 px-3 rounded-lg text-xs font-medium hover:bg-twilight-blue hover:text-silky-white active:bg-twilight-blue active:text-silky-white transition-colors touch-target"
+                    >
+                      채팅
+                    </button>
+                    <button 
+                      onClick={() => navigate(`/character/edit/${character.id}`)}
+                      className="bg-gray-100 text-gray-700 p-2 rounded-lg hover:bg-gray-200 active:bg-gray-300 transition-colors touch-target"
+                    >
+                      ⚙️
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
 
-          {/* Add Character Card */}
-          <div 
-            onClick={() => navigate('/character/create')}
-            className="card p-4 hover:shadow-lg cursor-pointer border-dashed border-2 touch-target"
-          >
-            <div className="text-center h-full flex flex-col justify-center">
-              <div className="text-3xl mb-3 text-gray-400">➕</div>
-              <h3 className="font-medium text-gray-600 mb-1">새 캐릭터</h3>
-              <p className="text-xs text-gray-500">AI 친구 생성하기</p>
+            {/* Add Character Card */}
+            <div 
+              onClick={() => navigate('/character/create')}
+              className="card p-4 hover:shadow-lg cursor-pointer border-dashed border-2 touch-target"
+            >
+              <div className="text-center h-full flex flex-col justify-center">
+                <div className="text-3xl mb-3 text-gray-400">➕</div>
+                <h3 className="font-medium text-gray-600 mb-1">새 캐릭터</h3>
+                <p className="text-xs text-gray-500">AI 친구 생성하기</p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Settings Menu */}

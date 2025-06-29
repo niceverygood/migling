@@ -3,4 +3,11 @@ node_modules/
 frontend/.env*
 database/dbdata/
 frontend/dist/
-backend/build/ mingling-key.pem
+backend/build/
+backend/uploads/
+mingling-key.pem
+sessionmanager-bundle.zip
+sessionmanager-bundle/
+*.log
+.DS_Store
+*.pem

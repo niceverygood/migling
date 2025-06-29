@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { characterAPI, personaAPI } from '../../lib/api';
 
@@ -29,6 +29,12 @@ const ForYou: React.FC = () => {
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [showPersonaModal, setShowPersonaModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // 검색 및 필터 상태
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedGender, setSelectedGender] = useState<string>('all');
+  const [showFilters, setShowFilters] = useState(false);
 
   // 캐릭터 데이터 로딩
   useEffect(() => {
@@ -61,6 +67,33 @@ const ForYou: React.FC = () => {
     loadCharacters();
   }, []);
 
+  // 필터링된 캐릭터 목록
+  const filteredCharacters = useMemo(() => {
+    return characters.filter(character => {
+      const matchesSearch = character.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           character.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           character.occupation.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesCategory = selectedCategory === 'all' || character.category === selectedCategory;
+      const matchesGender = selectedGender === 'all' || character.gender === selectedGender;
+      
+      return matchesSearch && matchesCategory && matchesGender;
+    });
+  }, [characters, searchQuery, selectedCategory, selectedGender]);
+
+  // 필터가 변경될 때 현재 인덱스 재설정
+  useEffect(() => {
+    if (currentCardIndex >= filteredCharacters.length) {
+      setCurrentCardIndex(0);
+    }
+  }, [filteredCharacters.length, currentCardIndex]);
+
+  // 고유한 카테고리 목록 생성
+  const uniqueCategories = useMemo(() => {
+    const categories = [...new Set(characters.map(char => char.category))];
+    return categories.filter(Boolean);
+  }, [characters]);
+
   // 페르소나 데이터 로딩
   const loadPersonas = async () => {
     try {
@@ -74,7 +107,7 @@ const ForYou: React.FC = () => {
 
   // 다음 카드로 이동
   const nextCard = () => {
-    if (currentCardIndex < characters.length - 1) {
+    if (currentCardIndex < filteredCharacters.length - 1) {
       setCurrentCardIndex(currentCardIndex + 1);
     }
   };
@@ -112,6 +145,14 @@ const ForYou: React.FC = () => {
     }
   };
 
+  // 검색 및 필터 초기화
+  const clearFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory('all');
+    setSelectedGender('all');
+    setCurrentCardIndex(0);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-silky-white mobile-container">
@@ -125,50 +166,172 @@ const ForYou: React.FC = () => {
     );
   }
 
-  const currentCharacter = characters[currentCardIndex];
+  const currentCharacter = filteredCharacters[currentCardIndex];
 
   return (
     <div className="min-h-screen bg-silky-white pb-20 safe-top mobile-container">
       {/* Header */}
       <div className="bg-white px-4 py-6 border-b border-gray-200 safe-top">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">For You</h1>
             <p className="text-gray-600 text-sm mt-1">새로운 AI 친구들을 만나보세요</p>
           </div>
           <div className="text-sm text-gray-500">
-            {currentCardIndex + 1} / {characters.length}
+            {filteredCharacters.length > 0 ? currentCardIndex + 1 : 0} / {filteredCharacters.length}
           </div>
         </div>
+
+        {/* 검색바 */}
+        <div className="relative mb-3">
+          <input
+            type="text"
+            placeholder="캐릭터 이름, 직업으로 검색..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 pl-10 focus:outline-none focus:ring-2 focus:ring-mingle-rose focus:border-transparent"
+          />
+          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+            🔍
+          </div>
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        {/* 필터 토글 버튼 */}
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <span className="text-sm font-medium text-gray-700">필터</span>
+            <span className="text-xs text-gray-500">
+              {showFilters ? '▲' : '▼'}
+            </span>
+          </button>
+          
+          {(searchQuery || selectedCategory !== 'all' || selectedGender !== 'all') && (
+            <button
+              onClick={clearFilters}
+              className="text-sm text-mingle-rose hover:text-twilight-blue transition-colors"
+            >
+              필터 초기화
+            </button>
+          )}
+        </div>
+
+        {/* 필터 옵션 */}
+        {showFilters && (
+          <div className="mt-3 space-y-3 bg-gray-50 p-4 rounded-xl">
+            {/* 카테고리 필터 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">카테고리</label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setSelectedCategory('all')}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    selectedCategory === 'all' 
+                      ? 'bg-mingle-rose text-silky-white' 
+                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  전체
+                </button>
+                {uniqueCategories.map(category => (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      selectedCategory === category 
+                        ? 'bg-mingle-rose text-silky-white' 
+                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 성별 필터 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">성별</label>
+              <div className="flex gap-2">
+                {[
+                  { value: 'all', label: '전체' },
+                  { value: 'male', label: '남성' },
+                  { value: 'female', label: '여성' }
+                ].map(option => (
+                  <button
+                    key={option.value}
+                    onClick={() => setSelectedGender(option.value)}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      selectedGender === option.value 
+                        ? 'bg-twilight-blue text-silky-white' 
+                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Character Cards */}
       <div className="flex-1 flex items-center justify-center p-4">
-        {characters.length === 0 ? (
+        {filteredCharacters.length === 0 ? (
           <div className="text-center">
-            <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">공개 캐릭터가 없어요</h3>
-            <p className="text-gray-600 text-sm mb-6">
-              아직 다른 사용자들이 만든 공개 캐릭터가 없습니다.<br/>
-              직접 캐릭터를 만들어보세요!
-            </p>
-            <div className="space-y-3">
-              <button
-                onClick={() => {
-                  setIsLoading(true);
-                  window.location.reload();
-                }}
-                className="w-full bg-twilight-blue text-silky-white py-3 px-6 rounded-xl font-medium hover:bg-opacity-90 transition-colors touch-target"
-              >
-                🔄 새로고침
-              </button>
-              <button
-                onClick={() => navigate('/character/create')}
-                className="w-full bg-mingle-rose text-silky-white py-3 px-6 rounded-xl font-medium hover:bg-opacity-90 transition-colors touch-target"
-              >
-                ✨ 내 캐릭터 만들기
-              </button>
-            </div>
+            {characters.length === 0 ? (
+              <>
+                <div className="text-6xl mb-4">🔍</div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">공개 캐릭터가 없어요</h3>
+                <p className="text-gray-600 text-sm mb-6">
+                  아직 다른 사용자들이 만든 공개 캐릭터가 없습니다.<br/>
+                  직접 캐릭터를 만들어보세요!
+                </p>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => {
+                      setIsLoading(true);
+                      window.location.reload();
+                    }}
+                    className="w-full bg-twilight-blue text-silky-white py-3 px-6 rounded-xl font-medium hover:bg-opacity-90 transition-colors touch-target"
+                  >
+                    🔄 새로고침
+                  </button>
+                  <button
+                    onClick={() => navigate('/character/create')}
+                    className="w-full bg-mingle-rose text-silky-white py-3 px-6 rounded-xl font-medium hover:bg-opacity-90 transition-colors touch-target"
+                  >
+                    ✨ 내 캐릭터 만들기
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-6xl mb-4">😔</div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">검색 결과가 없어요</h3>
+                <p className="text-gray-600 text-sm mb-6">
+                  선택한 조건에 맞는 캐릭터가 없습니다.<br/>
+                  다른 조건으로 검색해보세요.
+                </p>
+                <button
+                  onClick={clearFilters}
+                  className="bg-mingle-rose text-silky-white py-3 px-6 rounded-xl font-medium hover:bg-opacity-90 transition-colors touch-target"
+                >
+                  🔄 필터 초기화
+                </button>
+              </>
+            )}
           </div>
         ) : currentCharacter ? (
           <div className="w-full max-w-sm">
@@ -245,34 +408,36 @@ const ForYou: React.FC = () => {
             </div>
 
             {/* Navigation Buttons */}
-            <div className="flex justify-between items-center mt-6">
-              <button
-                onClick={prevCard}
-                disabled={currentCardIndex === 0}
-                className="p-3 bg-white rounded-full shadow-md hover:shadow-lg active:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-shadow touch-target"
-              >
-                <span className="text-xl">←</span>
-              </button>
-              
-              <div className="flex space-x-2">
-                {characters.map((_, index) => (
-                  <div
-                    key={index}
-                    className={`w-2 h-2 rounded-full transition-colors ${
-                      index === currentCardIndex ? 'bg-mingle-rose' : 'bg-gray-300'
-                    }`}
-                  />
-                ))}
-              </div>
+            {filteredCharacters.length > 1 && (
+              <div className="flex justify-between items-center mt-6">
+                <button
+                  onClick={prevCard}
+                  disabled={currentCardIndex === 0}
+                  className="p-3 bg-white rounded-full shadow-md hover:shadow-lg active:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-shadow touch-target"
+                >
+                  <span className="text-xl">←</span>
+                </button>
+                
+                <div className="flex space-x-2">
+                  {filteredCharacters.map((_, index) => (
+                    <div
+                      key={index}
+                      className={`w-2 h-2 rounded-full transition-colors ${
+                        index === currentCardIndex ? 'bg-mingle-rose' : 'bg-gray-300'
+                      }`}
+                    />
+                  ))}
+                </div>
 
-              <button
-                onClick={nextCard}
-                disabled={currentCardIndex === characters.length - 1}
-                className="p-3 bg-white rounded-full shadow-md hover:shadow-lg active:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-shadow touch-target"
-              >
-                <span className="text-xl">→</span>
-              </button>
-            </div>
+                <button
+                  onClick={nextCard}
+                  disabled={currentCardIndex === filteredCharacters.length - 1}
+                  className="p-3 bg-white rounded-full shadow-md hover:shadow-lg active:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-shadow touch-target"
+                >
+                  <span className="text-xl">→</span>
+                </button>
+              </div>
+            )}
           </div>
         ) : null}
       </div>
