@@ -14,7 +14,7 @@ const Login: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center p-4 safe-top safe-bottom">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm mx-auto">
+      <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-sm mx-auto">
         {/* Logo */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">Mingling</h1>
@@ -36,7 +36,7 @@ const Login: React.FC = () => {
         <button
           onClick={handleGoogleLogin}
           disabled={loading}
-          className="w-full bg-white border-2 border-gray-300 rounded-xl py-4 px-6 flex items-center justify-center space-x-3 hover:bg-gray-50 hover:border-gray-400 active:bg-gray-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg touch-target"
+          className="w-full bg-white border-2 border-gray-300 rounded-lg py-4 px-6 flex items-center justify-center space-x-3 hover:bg-gray-50 hover:border-gray-400 active:bg-gray-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg touch-target"
         >
           {loading ? (
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>

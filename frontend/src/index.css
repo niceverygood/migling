@@ -19,6 +19,8 @@
     line-height: 1.6;
     background-color: var(--color-background);
     color: var(--color-text);
+    margin: 0;
+    padding: 0;
   }
 
   /* Mobile viewport fix */
@@ -40,15 +42,14 @@
   }
 }
 
-/* Mobile Container - 모바일 뷰포트로 제한 */
+/* Mobile Container - 전체 화면 사용 */
 .mobile-container {
-  max-width: 430px;
   width: 100%;
-  margin: 0 auto;
   min-height: 100vh;
   background: white;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
   position: relative;
+  margin: 0;
+  padding: 0;
 }
 
 /* 데스크톱에서 모바일 뷰 시뮬레이션 */
@@ -70,28 +71,28 @@
 /* Component Styles */
 @layer components {
   .btn-primary {
-    @apply bg-mingle-rose text-silky-white hover:bg-twilight-blue active:bg-twilight-blue font-medium py-3 px-6 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md;
+    @apply bg-mingle-rose text-silky-white hover:bg-twilight-blue active:bg-twilight-blue font-medium py-3 px-6 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md;
   }
 
   .btn-secondary {
-    @apply bg-silky-white hover:bg-mint-mix text-night-ink font-medium py-3 px-6 rounded-xl border border-gray-200 transition-all duration-200 shadow-sm hover:shadow-md;
+    @apply bg-silky-white hover:bg-mint-mix text-night-ink font-medium py-3 px-6 rounded-lg border border-gray-200 transition-all duration-200 shadow-sm hover:shadow-md;
   }
 
   .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow;
+    @apply bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow;
   }
 
   .input-field {
-    @apply w-full px-4 py-3 bg-silky-white rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-mingle-rose focus:border-transparent transition-all duration-200;
+    @apply w-full px-4 py-3 bg-silky-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-mingle-rose focus:border-transparent transition-all duration-200;
   }
 
   /* === 채팅 말풍선 스타일 === */
   .chat-bubble-user {
-    @apply bg-mint-mix text-night-ink rounded-xl px-4 py-2 max-w-xs ml-auto;
+    @apply bg-mint-mix text-night-ink rounded-lg px-4 py-2 max-w-xs ml-auto;
   }
 
   .chat-bubble-character {
-    @apply bg-peach-mingle text-night-ink rounded-xl px-4 py-2 max-w-xs mr-auto;
+    @apply bg-peach-mingle text-night-ink rounded-lg px-4 py-2 max-w-xs mr-auto;
   }
 
   /* === 링크 스타일 === */
@@ -174,23 +175,18 @@
   animation: fadeIn 0.3s ease-out;
 }
 
-/* Mobile-specific optimizations */
-@media (max-width: 430px) {
-  body {
-    font-size: 16px; /* Prevent zoom on iOS */
-    background: white;
-    padding: 0;
-  }
+/* 전체 화면 최적화 */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+}
 
-  .mobile-container {
-    max-width: none;
-    box-shadow: none;
-    border-radius: 0;
-  }
-
-  input, textarea, select {
-    font-size: 16px; /* Prevent zoom on iOS */
-  }
+/* 모바일에서 확대 방지 */
+input, textarea, select {
+  font-size: 16px; /* Prevent zoom on iOS */
 }
 
 /* Dark mode support (future) */

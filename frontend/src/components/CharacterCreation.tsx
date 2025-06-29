@@ -467,7 +467,7 @@ export default function CharacterCreation() {
               onChange={(e) => setHashtagInput(e.target.value)}
               onKeyPress={handleHashtagKeyPress}
               placeholder="해시태그를 입력해주세요"
-              className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-mingle-rose focus:border-transparent transition-all"
+              className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-mingle-rose focus:border-transparent transition-all"
               maxLength={20}
             />
           </div>
@@ -475,7 +475,7 @@ export default function CharacterCreation() {
             type="button"
             onClick={addCustomHashtag}
             disabled={!hashtagInput.trim()}
-            className="px-6 py-3 bg-mingle-rose text-white rounded-xl font-medium hover:bg-opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all touch-target"
+                          className="px-6 py-3 bg-mingle-rose text-white rounded-lg font-medium hover:bg-opacity-90 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all touch-target"
           >
             추가
           </button>
@@ -487,7 +487,7 @@ export default function CharacterCreation() {
 
       {/* 선택된 해시태그 목록 */}
       {formData.hashtags.length > 0 && (
-        <div className="bg-mint-mix bg-opacity-20 rounded-2xl p-5 border border-mint-mix border-opacity-30">
+                    <div className="bg-mint-mix bg-opacity-20 rounded-lg p-5 border border-mint-mix border-opacity-30">
           <h3 className="text-lg font-semibold text-night-ink mb-3">
             선택된 해시태그 ({formData.hashtags.length}/10)
           </h3>
@@ -542,7 +542,7 @@ export default function CharacterCreation() {
       </div>
 
       {/* 도움말 */}
-      <div className="bg-peach-mingle bg-opacity-20 rounded-2xl p-4 border border-peach-mingle border-opacity-30">
+                <div className="bg-peach-mingle bg-opacity-20 rounded-lg p-4 border border-peach-mingle border-opacity-30">
         <div className="flex items-start space-x-3">
           <span className="text-lg">💡</span>
           <div>

@@ -153,7 +153,7 @@ const My: React.FC = () => {
 
       {/* Gems Balance */}
       <div className="px-4 mb-6">
-        <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl p-6 text-white">
+        <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-bold mb-1">보유 잼</h3>

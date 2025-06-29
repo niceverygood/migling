@@ -189,7 +189,7 @@ const ForYou: React.FC = () => {
             placeholder="캐릭터 이름, 직업으로 검색..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 pl-10 focus:outline-none focus:ring-2 focus:ring-mingle-rose focus:border-transparent"
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 pl-10 focus:outline-none focus:ring-2 focus:ring-mingle-rose focus:border-transparent"
           />
           <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
             🔍
@@ -228,7 +228,7 @@ const ForYou: React.FC = () => {
 
         {/* 필터 옵션 */}
         {showFilters && (
-          <div className="mt-3 space-y-3 bg-gray-50 p-4 rounded-xl">
+          <div className="mt-3 space-y-3 bg-gray-50 p-4 rounded-lg">
             {/* 카테고리 필터 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">카테고리</label>
@@ -304,13 +304,13 @@ const ForYou: React.FC = () => {
                       setIsLoading(true);
                       window.location.reload();
                     }}
-                    className="w-full bg-twilight-blue text-silky-white py-3 px-6 rounded-xl font-medium hover:bg-opacity-90 transition-colors touch-target"
+                    className="w-full bg-twilight-blue text-silky-white py-3 px-6 rounded-lg font-medium hover:bg-opacity-90 transition-colors touch-target"
                   >
                     🔄 새로고침
                   </button>
                   <button
                     onClick={() => navigate('/character/create')}
-                    className="w-full bg-mingle-rose text-silky-white py-3 px-6 rounded-xl font-medium hover:bg-opacity-90 transition-colors touch-target"
+                    className="w-full bg-mingle-rose text-silky-white py-3 px-6 rounded-lg font-medium hover:bg-opacity-90 transition-colors touch-target"
                   >
                     ✨ 내 캐릭터 만들기
                   </button>
@@ -326,7 +326,7 @@ const ForYou: React.FC = () => {
                 </p>
                 <button
                   onClick={clearFilters}
-                  className="bg-mingle-rose text-silky-white py-3 px-6 rounded-xl font-medium hover:bg-opacity-90 transition-colors touch-target"
+                  className="bg-mingle-rose text-silky-white py-3 px-6 rounded-lg font-medium hover:bg-opacity-90 transition-colors touch-target"
                 >
                   🔄 필터 초기화
                 </button>
@@ -401,7 +401,7 @@ const ForYou: React.FC = () => {
               {/* Chat Button */}
               <button
                 onClick={() => handleChatStart(currentCharacter)}
-                className="w-full bg-mingle-rose hover:bg-twilight-blue active:bg-twilight-blue text-silky-white py-4 rounded-xl font-medium text-lg transition-colors touch-target"
+                className="w-full bg-mingle-rose hover:bg-twilight-blue active:bg-twilight-blue text-silky-white py-4 rounded-lg font-medium text-lg transition-colors touch-target"
               >
                 💬 채팅하기
               </button>
@@ -445,7 +445,7 @@ const ForYou: React.FC = () => {
       {/* Persona Selection Modal */}
       {showPersonaModal && selectedCharacter && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+          <div className="bg-white rounded-lg p-6 w-full max-w-sm">
             <div className="text-center mb-4">
               <h3 className="text-lg font-semibold text-gray-900">채팅 프로필</h3>
               <p className="text-sm text-gray-600 mt-1">

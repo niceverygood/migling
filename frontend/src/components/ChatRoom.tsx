@@ -268,7 +268,7 @@ export default function ChatRoom() {
       <div className="flex-1 overflow-y-auto p-4 space-y-4 hide-scrollbar">
         {messages.map((message, index) => (
           <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[280px] px-4 py-3 rounded-2xl ${
+            <div className={`max-w-[280px] px-4 py-3 rounded-lg ${
               message.role === 'user' 
                 ? 'chat-bubble-user' 
                 : 'chat-bubble-character'
